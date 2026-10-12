@@ -1,0 +1,1571 @@
+/* ==========================================================================
+   nam. — portfolio
+   Every value below comes from the approved wireframe (wireframe/index.html).
+   The only additions are grouped at the end under "site only".
+   ========================================================================== */
+
+:root {
+    --ink: #504141;
+    --mid: #655757;
+    --line: #a69f9f;
+    --fill: #b6b4b4;
+    --paper: #c4c4c4; /* page background */
+    --title: #761f21; /* titles */
+    --accent: #d91b24; /* palette red */
+    --navh: 58px; /* header height; main.js measures the real value */
+    --screen: calc(100svh - var(--navh));
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* every page: each section fills one screen and snaps on scroll */
+html {
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: var(--navh);
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+h1 {
+    font-size: clamp(26px, 5vw, 44px);
+    line-height: 1.15;
+}
+
+h2 {
+    font-size: 22px;
+}
+
+h3 {
+    font-size: 16px;
+}
+
+.muted {
+    color: var(--mid);
+}
+
+.mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- page frame: short pages keep the footer at the bottom of the screen ---------- */
+
+.sheet {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    background: var(--paper);
+}
+
+.sheet > * {
+    flex-shrink: 0;
+}
+
+.sheet > .rail {
+    flex: 1 0 auto;
+}
+
+.rail {
+    position: relative;
+    margin: 0;
+}
+
+/* ---------- header ---------- */
+
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    background: var(--paper);
+    border-bottom: 1.5px solid var(--ink);
+}
+
+.nav .logo {
+    font-weight: 700;
+}
+
+.nav .logo img {
+    display: block;
+    width: 36px;
+    height: 36px;
+}
+
+.nav a {
+    color: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.nav > * {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+    padding: 10px 20px;
+    border-left: 1px solid var(--ink);
+}
+
+.nav > :first-child {
+    border-left: 0;
+    font-size: 24px;
+    letter-spacing: -.04em;
+}
+
+/* menu: only the current page's link is underlined */
+.nav .links a {
+    text-decoration: none;
+}
+
+.nav .links a.cur {
+    text-decoration: underline;
+}
+
+.nav .links {
+    flex: 1;
+    justify-content: center;
+    gap: 40px;
+}
+
+/* ---------- blocks (case study, archive) ---------- */
+
+.block {
+    position: relative;
+    padding: 36px 20px 24px;
+    border-bottom: 1px dashed var(--line);
+}
+
+.block:last-of-type {
+    border-bottom: 0;
+}
+
+.stack > * + * {
+    margin-top: 16px;
+}
+
+.narrow {
+    max-width: 640px;
+}
+
+.grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.grid.small {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.split {
+    display: grid;
+    gap: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: start;
+}
+
+/* ---------- image placeholder: box with a cross ---------- */
+
+.img {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--mid);
+    border: 1.5px solid var(--mid);
+    background:
+        linear-gradient(to top right, transparent calc(50% - 1px), var(--line) 50%, transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, transparent calc(50% - 1px), var(--line) 50%, transparent calc(50% + 1px)),
+        var(--fill);
+}
+
+.img span {
+    background: var(--fill);
+    padding: 0 6px;
+}
+
+.img.wide {
+    aspect-ratio: 21 / 9;
+}
+
+.img.square {
+    aspect-ratio: 1;
+}
+
+.img.tall {
+    aspect-ratio: 4 / 5;
+}
+
+/* ---------- small parts ---------- */
+
+.card {
+    border: 1.5px solid var(--ink);
+    padding: 12px;
+}
+
+.card > * + * {
+    margin-top: 10px;
+}
+
+.btn {
+    display: inline-block;
+    border: 1.5px solid var(--ink);
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chips span {
+    border: 1px solid var(--mid);
+    padding: 2px 10px;
+    font-size: 13px;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin: 0;
+}
+
+dt {
+    font-size: 12px;
+    color: var(--mid);
+}
+
+dd {
+    margin: 0;
+}
+
+.stat {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.hero .img,
+.chat .img {
+    border: 0;
+}
+
+/* ---------- home: hero ---------- */
+
+.hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: var(--screen);
+    border-bottom: 1px solid var(--ink);
+}
+
+.cells {
+    display: grid;
+}
+
+.cells > * {
+    min-width: 0;
+}
+
+.cells > * + * {
+    border-left: 1px solid var(--ink) !important;
+}
+
+.pad {
+    padding: 16px 20px;
+}
+
+/* one grid: wordmark top-left, intro bottom-left, portrait down the whole right side */
+.hero .cells {
+    flex: 1;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: 1fr auto;
+}
+
+.hero .img {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 200px;
+}
+
+.hero .hero-about {
+    grid-column: 1;
+    grid-row: 2;
+    border-left: 0 !important;
+    border-top: 1px solid var(--ink);
+}
+
+/* phones: portrait beside the wordmark, intro across the full width below */
+@media (max-width: 760px) {
+    .hero .img {
+        grid-row: 1;
+    }
+
+    .hero .hero-about {
+        grid-column: 1 / -1;
+    }
+}
+
+.wordmark {
+    align-self: end;
+    font-size: clamp(56px, calc(20.5vw - 14px), 300px); /* sized so "Hnam." fits its cell at every width */
+    font-weight: 700;
+    line-height: .8;
+    letter-spacing: -.07em;
+}
+
+.lede {
+    max-width: 24em;
+    font-size: clamp(20px, 2.6vw, 30px);
+    line-height: 1.3;
+}
+
+/* ---------- sections, headings, table rows ---------- */
+
+.sec {
+    position: relative;
+    border-bottom: 1px solid var(--ink);
+}
+
+.head {
+    padding: 36px 20px 12px;
+}
+
+.kicker {
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+
+/* the small line above a big title */
+.kicker:has(+ .big) {
+    font-size: 18px;
+    letter-spacing: .1em;
+}
+
+.big {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.05em;
+}
+
+.trow {
+    display: grid;
+    grid-template-columns: 110px 3fr 2fr;
+    gap: 4px 16px;
+    padding: 10px 20px;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.trow > :first-child {
+    color: var(--mid);
+}
+
+.trow u {
+    text-underline-offset: 4px;
+}
+
+.trow > :last-child {
+    color: var(--mid);
+}
+
+.chat {
+    grid-template-columns: 3fr 2fr;
+    border-top: 1px solid var(--ink);
+}
+
+.chat .img {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 220px;
+}
+
+/* ---------- footer: plain grey lines, left aligned ---------- */
+
+.foot {
+    padding: 56px 20px 88px;
+    border-top: 1px solid var(--ink);
+    color: var(--mid);
+    font-size: 16px;
+    line-height: 2;
+    scroll-snap-align: end;
+}
+
+.foot u {
+    text-underline-offset: 4px;
+}
+
+/* ---------- how I work: timeline, the hovered dot goes into focus and shows its description ---------- */
+
+.tl {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-content: center;
+    padding: 24px 0;
+}
+
+.tl-step {
+    position: relative;
+    padding: 44px 20px 0;
+    outline: 0;
+    cursor: default;
+}
+
+/* the line through the dots */
+.tl-step::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--ink);
+}
+
+.tl-dot {
+    position: absolute;
+    top: 7px;
+    left: 20px;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--paper);
+    transition: transform .2s, background .2s, box-shadow .2s;
+}
+
+.tl-step.on .tl-dot {
+    transform: scale(1.9);
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--accent);
+}
+
+.tl-step h3 {
+    margin-top: 4px;
+    font-size: 20px;
+    color: var(--mid);
+    transition: color .2s;
+}
+
+.tl-step.on h3 {
+    color: var(--ink);
+}
+
+.tl-desc {
+    max-width: 26em;
+    margin-top: 10px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .2s, transform .2s;
+}
+
+.tl-step.on .tl-desc {
+    opacity: 1;
+    transform: none;
+}
+
+@media (max-width: 760px) {
+    .tl {
+        grid-template-columns: 1fr;
+    }
+
+    .tl-step {
+        padding: 0 20px 24px 52px;
+    }
+
+    .tl-step::before {
+        top: 0;
+        bottom: 0;
+        left: 26px;
+        right: auto;
+        border-top: 0;
+        border-left: 1px solid var(--ink);
+    }
+
+    .tl-dot {
+        top: 4px;
+        left: 19px;
+    }
+}
+
+/* ---------- floating page switcher, on every page ---------- */
+
+.pill {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    z-index: 3;
+    transform: translateX(-50%);
+    min-width: 150px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 20px;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.pill a {
+    display: none;
+    padding: 8px 18px;
+    cursor: pointer;
+}
+
+.pill.open a,
+.pill a.cur {
+    display: block;
+}
+
+.pill a.cur::before {
+    content: "⋮  ";
+}
+
+.pill.open a.cur {
+    background: #444;
+}
+
+@media (max-width: 760px) {
+    .cells {
+        grid-template-columns: 1fr;
+    }
+
+    .cells > * + * {
+        border-left: 0 !important;
+        border-top: 1px solid var(--ink);
+    }
+
+    .trow {
+        grid-template-columns: 64px 1fr;
+    }
+
+    .trow > :last-child {
+        grid-column: 2;
+    }
+
+    /* phones keep the menu in the header, tightened to fit */
+    .nav > * {
+        padding: 10px 12px;
+    }
+
+    .nav .links {
+        gap: 14px;
+        font-size: 14px;
+    }
+
+    /* no room for a fourth link on a phone: the logo is the way home there */
+    .nav .links a:first-child {
+        display: none;
+    }
+
+    .nav > :first-child {
+        margin-right: auto;
+    }
+}
+
+.trow.static {
+    cursor: default;
+}
+
+/* notes: upload date and title only */
+.trow.two {
+    grid-template-columns: 110px 1fr;
+}
+
+.trow.two > :last-child {
+    color: inherit;
+}
+
+/* hovering a project swaps the background of its own column; the hovered row stays a clean strip of paper */
+.trow[data-img]:hover {
+    background: var(--paper);
+}
+
+.cols2 > div {
+    position: relative;
+}
+
+.sec-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+    background:
+        linear-gradient(to top right, transparent calc(50% - 1px), var(--line) 50%, transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, transparent calc(50% - 1px), var(--line) 50%, transparent calc(50% + 1px)),
+        var(--fill);
+}
+
+.sec-bg.photo {
+    background-size: cover;
+    background-position: center;
+}
+
+/* a veil of paper over a real photo keeps the text readable */
+.sec-bg.photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    opacity: .78;
+}
+
+.sec-bg.show {
+    opacity: 1;
+}
+
+.sec-bg span {
+    position: absolute;
+    right: 20px;
+    bottom: 16px;
+    padding: 0 6px;
+    font-size: 12px;
+    color: var(--mid);
+    background: var(--fill);
+}
+
+.sec-bg ~ * {
+    position: relative;
+    z-index: 1;
+}
+
+.head .sub {
+    margin-top: 12px;
+    color: var(--mid);
+}
+
+.rail .block:last-child {
+    border-bottom: 0;
+}
+
+/* ---------- full-screen sections ---------- */
+
+.snap {
+    display: flex;
+    flex-direction: column;
+    min-height: var(--screen);
+    scroll-snap-align: start;
+}
+
+/* the title holds at the top, the list sits at the bottom */
+.snap .head + .trow {
+    margin-top: auto;
+}
+
+/* two tables side by side in one full screen */
+.cols2 {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.cols2 > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-bottom: 72px;
+}
+
+.cols2 > div + div {
+    border-left: 1px solid var(--ink);
+}
+
+.cols2 .trow:last-child {
+    border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 760px) {
+    .cols2 {
+        grid-template-columns: 1fr;
+    }
+
+    .cols2 > div + div {
+        border-left: 0;
+        border-top: 1px solid var(--ink);
+    }
+}
+
+.snap:has(> .trow),
+.block.snap {
+    padding-bottom: 72px;
+}
+
+.snap .trow:last-child {
+    border-bottom: 1px solid var(--line);
+}
+
+/* ---------- samples: one pinned screen, scrolling stacks the samples ---------- */
+
+.hscroll {
+    height: calc(var(--n) * var(--screen));
+}
+
+.hsnap {
+    position: absolute;
+    top: calc(var(--i) * var(--screen));
+    left: 0;
+    width: 1px;
+    height: var(--screen);
+    scroll-snap-align: start;
+}
+
+.hpin {
+    position: sticky;
+    top: var(--navh);
+    display: flex;
+    flex-direction: column;
+    height: var(--screen);
+    overflow: hidden;
+}
+
+/* stacking stage: the current sample is centred, the next rises from below and covers it */
+.cover {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.cslide {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50vw;
+    text-align: center;
+    will-change: transform;
+}
+
+.cslide .img {
+    border-radius: 20px;
+
+    box-shadow: 0 -6px 30px rgba(0, 0, 0, .14);
+}
+
+.cslide p {
+    margin-top: 14px;
+}
+
+.pager {
+
+    position: relative;
+
+    z-index: 1;
+    align-self: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    margin: 8px 0 76px;
+    padding: 8px 14px;
+    border-radius: 24px;
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.pager a {
+    padding: 0 8px;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.pager i {
+    width: 7px;
+    height: 7px;
+    border-radius: 4px;
+    background: var(--mid);
+    cursor: pointer;
+    transition: width .2s;
+}
+
+.pager i.on {
+    width: 30px;
+    background: var(--paper);
+}
+
+@media (max-width: 760px) {
+    .cslide {
+        width: 74vw;
+    }
+}
+
+.snap .chat {
+    flex: 1;
+}
+
+/* ==========================================================================
+   site only: things the wireframe did not need
+   ========================================================================== */
+
+/* real links keep the look the wireframe gave their stand-ins */
+a.trow,
+a.btn,
+.nav a.logo,
+.pill a,
+.back,
+.plain {
+    color: inherit;
+    text-decoration: none;
+}
+
+.plain:hover,
+.back:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* language switch: same box as the wireframe's "VI / EN" cell, the active language is underlined */
+.nav .langbtn {
+    border: 0;
+    border-left: 1px solid var(--ink);
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.langbtn u {
+    text-decoration: none;
+}
+
+.langbtn u.on {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* real text where the wireframe drew grey bars: same 20px line pitch as the bars */
+.copy {
+    line-height: 20px;
+}
+
+/* text only Nam can write is still drawn as the wireframe's grey bars */
+.lines {
+    height: calc(var(--n, 3) * 20px);
+    background: repeating-linear-gradient(var(--fill) 0 10px, transparent 10px 20px);
+}
+
+/* case study: previous / next, one button at each end */
+.prevnext {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+/* archive filter: the active chip gets a darker outline */
+.chips span[data-kind] {
+    cursor: pointer;
+}
+
+.chips span[aria-pressed="true"] {
+    border-color: var(--ink);
+}
+
+figure[hidden] {
+    display: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-snap-type: none;
+    }
+}
+
+figure {
+    margin: 0;
+}
+
+/* ---------- colour: off-white paper and one burgundy accent, used sparingly ---------- */
+
+::selection {
+    background: var(--accent);
+    color: var(--paper);
+}
+
+.wordmark i {
+    font-style: normal;
+    color: var(--accent);
+}
+
+.nav a:hover,
+.plain:hover,
+.back:hover,
+.langbtn:hover,
+.trow[data-img]:hover > :nth-child(2) {
+    color: var(--accent);
+}
+
+.langbtn u.on {
+    text-decoration-color: var(--accent);
+}
+
+.btn {
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.btn:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--paper);
+}
+
+/* the logo drawing has a white ground; multiply lets the paper show through */
+.nav .logo img {
+    mix-blend-mode: multiply;
+}
+
+/* home portrait: fills the hero's image cell, over the placeholder */
+.hero .img {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero .img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 44% 66%; /* keeps Nam in frame when the cell crops the photo */
+}
+
+/* the current page in the menu is burgundy */
+.nav .links a.cur {
+    color: var(--accent);
+}
+
+/* work samples: real screens fill the rounded card */
+.cslide .img {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    border-color: var(--line);
+    background: var(--paper);
+}
+
+.cslide .img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+}
+
+/* ---------- dark top bar ---------- */
+
+.nav {
+    --bar: #504141; /* palette dark */
+    background: var(--bar);
+    color: var(--paper);
+    border-bottom-color: var(--bar);
+}
+
+.nav > *,
+.nav .langbtn {
+    border-left-color: rgba(255, 255, 255, .22);
+}
+
+/* the logo is a black drawing on white: invert it and let the bar show through */
+.nav .logo img {
+    filter: invert(1);
+    mix-blend-mode: screen;
+}
+
+/* on the dark bar the current page is full-strength paper with the line under it; the rest sit back */
+.nav .links a {
+    color: rgba(196, 196, 196, .72);
+}
+
+.nav .links a:hover,
+.nav .langbtn:hover,
+.nav .links a.cur {
+    color: var(--paper);
+}
+
+.nav .langbtn u.on {
+    text-decoration-color: var(--paper);
+}
+
+.nav :focus-visible {
+    outline-color: var(--paper);
+}
+
+/* ---------- titles take the deep red ---------- */
+
+h1,
+h2,
+h3,
+.big,
+.wordmark,
+.stat {
+    color: var(--title);
+}
+
+/* ---------- archive: one screen. The work runs in an endless thin line across the middle;
+   pieces near the focus point open into a loose, overlapping pile ---------- */
+
+.arch {
+    position: relative;
+    height: var(--screen);
+    overflow: hidden;
+}
+
+.arch-head {
+    position: absolute;
+    top: 28px;
+    left: 20px;
+    z-index: 1;
+    max-width: 30em;
+    pointer-events: none;
+}
+
+.arch-head a {
+    pointer-events: auto;
+}
+
+.arch-head > * + * {
+    margin-top: 10px;
+}
+
+.arch-stage {
+    position: absolute;
+    inset: 0;
+    touch-action: pan-y;
+}
+
+/* the hairline the pieces sit on, exactly halfway down the screen */
+.arch-stage::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px solid var(--line);
+}
+
+.strip {
+    position: absolute;
+    inset: 0;
+    outline: none;
+}
+
+.strip figure {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    /* until the script has placed a piece, it has no size and cannot show */
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+/* only a piece that has opened casts a shadow; the resting line has none */
+.strip figure.up {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .2);
+}
+
+.strip img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.strip figcaption {
+    display: none;
+}
+
+.arch-foot {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+    z-index: 1;
+    display: flex;
+    gap: 24px;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--mid);
+    pointer-events: none;
+}
+
+.arch-foot #arch-cap {
+    color: var(--ink);
+}
+
+.arch-foot .arch-hint {
+    margin-left: auto;
+}
+
+.strip img {
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.arch-foot .mono {
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+    .arch-foot .arch-hint {
+        display: none;
+    }
+}
+
+/* contact: the photo fills its cell, centred on the cup */
+.chat .img {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.chat .img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 46%;
+}
+
+/* ---------- certificates: hover shows the paper behind the column, a click opens it large over a blurred page ---------- */
+
+.trow.cert {
+    cursor: zoom-in;
+}
+
+.trow.cert u {
+    text-underline-offset: 4px;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 4vmin;
+    background: rgba(80, 65, 65, .45);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    cursor: zoom-out;
+    animation: lightbox-in .2s ease-out;
+}
+
+.lightbox[hidden] {
+    display: none;
+}
+
+.lightbox img {
+    display: block;
+    max-width: calc(100vw - 8vmin);
+    max-height: calc(100svh - 8vmin);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, .45);
+}
+
+.lightbox-x {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+@keyframes lightbox-in {
+    from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lightbox { animation: none; }
+}
+
+/* a certificate made of several course certificates: a click opens the whole set over the blurred page */
+.trow.group {
+    cursor: zoom-in;
+}
+
+.trow.group u {
+    text-underline-offset: 4px;
+}
+
+.lightbox img[hidden],
+.lightbox-set[hidden] {
+    display: none;
+}
+
+.lightbox-set {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
+    width: min(1280px, 100%);
+    max-height: calc(100svh - 8vmin);
+    overflow-y: auto;
+    cursor: default;
+}
+
+.set-tile {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--paper);
+    text-align: left;
+    cursor: zoom-in;
+}
+
+.set-tile.empty {
+    cursor: default;
+}
+
+.set-tile img,
+.set-tile .img {
+    display: grid;
+    width: 100%;
+    aspect-ratio: 1800 / 1391;
+    max-width: none;
+    max-height: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+}
+
+.set-tile .img {
+    border: 1.5px dashed rgba(255, 255, 255, .6);
+    background: rgba(255, 255, 255, .08);
+    color: var(--paper);
+    box-shadow: none;
+}
+
+.set-tile .img span {
+    background: none;
+}
+
+.set-tile > span {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.set-tile.empty > span {
+    opacity: .7;
+}
+
+@media (max-width: 900px) {
+    .lightbox-set {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+}
+
+/* a set of nine or more fits in two rows on a wide screen */
+@media (min-width: 901px) {
+    .lightbox-set.many {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+/* worked and certificates: titles carry no underline */
+.trow.cert u,
+.trow.group u {
+    text-decoration: none;
+}
+
+/* ---------- home, "what makes me happy": a thin line of photos between the title and the list.
+   Like the archive line: pieces near the pointer grow, drift off the line and overlap ---------- */
+
+/* three lines, stacked, sharing the space between the title and the list */
+.plines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    padding: 10px 0;
+}
+
+.pline {
+    position: relative;
+    flex: 1;
+    min-height: 100px;
+    touch-action: pan-y;
+}
+
+/* the line being used rises above its neighbours, so its opened photos overlap them */
+.pline.live {
+    z-index: 2;
+}
+
+.pline::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px solid var(--line);
+}
+
+.pline figure {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    aspect-ratio: auto;
+    padding: 0;
+    border-width: 1px;
+    overflow: hidden;
+}
+
+.pline figure span {
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity .15s;
+}
+
+.pline figure.up {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .2);
+}
+
+.pline figure.up span {
+    opacity: 1;
+}
+
+.pline figure img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* the list sits at the bottom, under the line */
+.snap .plines + .trow {
+    border-top: 1px solid var(--line);
+}
+
+/* ---------- no underlined text anywhere, except the menu in the top bar ---------- */
+.page :is(a, u):not(.nav *),
+.page :is(a, u):not(.nav *):hover {
+    text-decoration: none !important;
+}
+
+/* ---------- case study: merged sections. Problem + what I found + decision share one screen;
+   solution + result share the next ---------- */
+
+.merged .duo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+.merged .duo .img {
+    aspect-ratio: auto;
+    height: clamp(110px, 17vh, 190px);
+}
+
+.merged .part {
+    margin-top: 36px;
+}
+
+.merged .split .img {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 200px;
+}
+
+.merged .grid.small .img {
+    aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 760px) {
+    .merged .duo {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* the closing reflection sits under the result, with the previous / next links at the foot of the section */
+.merged .part.stack > * + * {
+    margin-top: 12px;
+}
+
+.merged .prevnext {
+    padding-top: 28px;
+}
+
+/* tighter spacing so solution + result + reflection fit one screen */
+.block.snap.merged {
+    padding-top: 28px;
+    padding-bottom: 20px;
+}
+
+.merged .part {
+    margin-top: 24px;
+}
+
+.merged .prevnext {
+    padding-top: 14px;
+}
+
+.merged .grid.small .img {
+    aspect-ratio: 2 / 1;
+}
+
+/* previous / next project: plain text links, no box */
+.prevnext .btn {
+    border: 0;
+    padding: 8px 0;
+}
+
+.prevnext .btn:hover {
+    background: none;
+    color: var(--accent);
+}
+
+/* an image box that holds a real picture */
+.img.has-photo {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.img.has-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.img.has-photo.fit img {
+    object-fit: contain;
+}
+
+/* no placeholder cross behind a real picture; tall field photos show their upper part */
+.img.has-photo {
+    background: var(--fill);
+    border-color: var(--line);
+}
+
+.merged .duo .img.has-photo img {
+    object-position: 50% 28%;
+}
+
+/* ---------- case study, section 2: problem + what I found fill the height, the decision sits at the bottom ---------- */
+
+.merged > .duo {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.merged > .duo > .stack {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.merged > .duo .img {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 110px;
+}
+
+.merged > .duo + .part {
+    margin-top: 28px;
+}
+
+/* real pictures in that row: shown whole at their own proportions, as tall as the row allows, kept to the left */
+.merged > .duo .img.has-photo {
+    background: none;
+    border: 0;
+}
+
+.merged > .duo .img.has-photo img {
+    object-fit: contain;
+    object-position: left top;
+}
+
+/* the problem's picture area: five pictures of different sizes in one block */
+.merged > .duo .mosaic {
+    flex: 1 1 auto;
+    min-height: 220px;
+    display: grid;
+    grid-template-columns: 46fr 22fr 27fr;
+    grid-template-rows: 6fr 5fr 5fr;
+    gap: 12px;
+}
+
+.merged > .duo .mosaic .img {
+    min-height: 0;
+    min-width: 0;
+}
+
+/* one tall picture on the left; on the right a wide one above a tall one and two stacked */
+.merged > .duo .mosaic .img:nth-child(1) { grid-area: 1 / 1 / 4 / 2; }
+.merged > .duo .mosaic .img:nth-child(2) { grid-area: 1 / 2 / 2 / 4; }
+.merged > .duo .mosaic .img:nth-child(3) { grid-area: 2 / 2 / 4 / 3; }
+.merged > .duo .mosaic .img:nth-child(4) { grid-area: 2 / 3 / 3 / 4; }
+.merged > .duo .mosaic .img:nth-child(5) { grid-area: 3 / 3 / 4 / 4; }
+
+/* in the block a picture fills its tile */
+.merged > .duo .mosaic .img.has-photo img {
+    object-fit: cover;
+    object-position: 50% 28%;
+}
+
+/* the whole picture, uncropped, follows the mouse while it rests on a tile */
+.peek {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    box-shadow: 0 18px 50px rgba(40, 28, 28, .35);
+}
+
+.peek.on {
+    opacity: 1;
+}
+
+.peek img {
+    display: block;
+    max-width: min(46vw, 720px);
+    max-height: 76svh;
+}
