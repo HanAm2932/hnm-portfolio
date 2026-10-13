@@ -623,8 +623,29 @@ dd {
 }
 
 .sec-bg.photo {
-    background-size: cover;
-    background-position: center;
+    background: var(--fill);
+}
+
+/* each row's photo already lies in the layer, fetched and drawn, so a hover only has to uncover it */
+.sec-bg img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+}
+
+.sec-bg img.on {
+    opacity: 1;
+}
+
+/* with a mouse, the browser is told to keep the hidden photos drawn, so nothing is decoded at the moment of the hover */
+@media (hover: hover) {
+    .sec-bg,
+    .sec-bg img {
+        will-change: opacity;
+    }
 }
 
 /* a veil of paper over a real photo keeps the text readable */
@@ -1618,7 +1639,8 @@ figure > img.wait {
 }
 
 /* ---------- loading screen: covers the page until everything on it has been fetched (main.js).
-   The <head> of each page sets html.loading before anything is drawn; without scripts the class is never set and the screen never shows ---------- */
+   The <head> of each page sets html.loading before anything is drawn, unless this visit has already fetched everything,
+   and takes it off again after 15 s should main.js never run; without scripts the class is never set and the screen never shows ---------- */
 
 .loader {
     position: fixed;

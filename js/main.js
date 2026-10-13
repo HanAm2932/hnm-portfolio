@@ -20,26 +20,17 @@
     });
 
     /* ---------- loading screen: a visitor first meets a plain screen with a counter (.loader, the first thing in each page)
-       while everything the page can show is fetched: its own pictures and the ones behind them, which are the hover backgrounds,
-       the certificate sets and the full-size version of every small picture. Then the screen fades away and nothing is left to wait for.
+       while the whole site is fetched: this page's pictures and the ones behind them (hover backgrounds, the certificate sets,
+       the full-size version of every small picture), and the same for every other page, found by following the links.
+       Then the screen fades away and nothing is left to wait for, here or on the next page.
        The archive's 125 full-size pieces are left out: they still arrive as each one nears the focus.
-       After ten seconds the screen lifts anyway and the rest keeps arriving behind the skeletons. ---------- */
+       After ten seconds the screen lifts anyway and the rest keeps arriving behind the skeletons.
+       Once everything is in, the visit is marked (sessionStorage.warm) and the <head> of the next page skips the screen. ---------- */
     const loader = document.querySelector('.loader');
+    const here = location.href.split(/[?#]/)[0];
     const behind = new Set();
-    if (!(navigator.connection && navigator.connection.saveData)) {
-        const scan = from => {
-            from.querySelectorAll('[data-bg]').forEach(el => behind.add(el.dataset.bg));
-            from.querySelectorAll('template').forEach(t => {
-                t.content.querySelectorAll('img[src]').forEach(img => behind.add(img.getAttribute('src')));
-                scan(t.content);
-            });
-        };
-        scan(document);
-        document.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) behind.add(img.dataset.full); });
-    }
-    const own = [...document.images].filter(img => img.getAttribute('src') && !img.complete);
-    const total = own.length + behind.size;
-    let got = 0, lifted = false;
+    const kept = [];                    /* the fetched pictures are held on to, so the browser keeps them in memory */
+    let got = 0, total = 0, shown = 0, crawling = true, lifted = false;
 
     const lift = () => {
         if (lifted) return;
@@ -49,25 +40,68 @@
         root.classList.remove('loading');
         if (loader) setTimeout(() => loader.remove(), 600);
     };
-    const tally = () => {
-        got++;
-        if (loader) {
-            loader.style.setProperty('--p', got / total);
-            loader.querySelector('.loader-n').textContent = Math.round(got / total * 100) + '%';
+    const settle = () => {
+        if (loader && total) {
+            shown = Math.max(shown, got / total);       /* the counter never runs backwards when another page adds to the list */
+            loader.style.setProperty('--p', shown);
+            loader.querySelector('.loader-n').textContent = Math.round(shown * 100) + '%';
         }
-        if (got >= total) lift();
+        if (crawling || got < total) return;
+        try { sessionStorage.setItem('warm', '1'); } catch (e) { }
+        lift();
     };
-    own.forEach(img => {
+    const tally = () => { got++; settle(); };
+    const want = src => {
+        if (behind.has(src)) return;
+        behind.add(src);
+        total++;
+        const img = new Image();
+        img.fetchPriority = 'low';      /* the pictures in this page go first */
+        img.onload = img.onerror = tally;
+        img.src = src;
+        kept.push(img);
+    };
+    /* what a page holds behind its pictures; for another page, its pictures as well */
+    const scan = (doc, base, other) => {
+        const add = src => { if (src) want(new URL(src, base).href); };
+        const within = from => {
+            from.querySelectorAll('[data-bg]').forEach(el => add(el.dataset.bg));
+            from.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) add(img.dataset.full); });
+            from.querySelectorAll('template').forEach(t => {
+                t.content.querySelectorAll('img[src]').forEach(img => add(img.getAttribute('src')));
+                within(t.content);
+            });
+        };
+        within(doc);
+        if (other) doc.querySelectorAll('img[src]').forEach(img => add(img.getAttribute('src')));
+    };
+    const seen = new Set([here]);
+    const crawl = (doc, base) => Promise.all(
+        [...doc.querySelectorAll('a[href]')]
+            .map(a => new URL(a.getAttribute('href'), base))
+            .filter(u => u.origin === location.origin && u.pathname.endsWith('.html'))
+            .map(u => u.origin + u.pathname)
+            .filter(url => !seen.has(url) && seen.add(url))
+            .map(async url => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+                    const page = new DOMParser().parseFromString(await res.text(), 'text/html');
+                    scan(page, url, true);
+                    await crawl(page, url);
+                } catch (e) { }
+            }));
+
+    [...document.images].filter(img => img.getAttribute('src') && !img.complete).forEach(img => {
+        total++;
         img.addEventListener('load', tally, { once: true });
         img.addEventListener('error', tally, { once: true });
     });
-    behind.forEach(src => {
-        const img = new Image();
-        img.fetchPriority = 'low';          /* the page's own pictures go first */
-        img.onload = img.onerror = tally;
-        img.src = src;
-    });
-    if (!total) lift();
+    if (navigator.connection && navigator.connection.saveData) { crawling = false; settle(); }
+    else {
+        scan(document, here, false);
+        crawl(document, here).then(() => { crawling = false; settle(); });
+    }
     setTimeout(lift, 10000);
 
     /* ---------- language: English is in the page, Vietnamese sits in data-vi ---------- */
@@ -101,10 +135,18 @@
             bg.appendChild(document.createElement('span'));
             sec.prepend(bg);
         }
+        /* the row's photo already lies in the layer, fetched and drawn, so a hover only has to uncover it */
+        let pic = null;
+        if (row.dataset.bg) {
+            pic = document.createElement('img');
+            pic.alt = '';
+            pic.src = row.dataset.bg;
+            bg.prepend(pic);
+        }
         row.addEventListener('mouseenter', () => {
-            bg.querySelector('span').textContent = row.dataset.bg ? '' : row.dataset.img;
-            bg.style.backgroundImage = row.dataset.bg ? 'url("' + row.dataset.bg + '")' : '';
-            bg.classList.toggle('photo', !!row.dataset.bg);
+            bg.querySelector('span').textContent = pic ? '' : row.dataset.img;
+            bg.querySelectorAll('img').forEach(img => img.classList.toggle('on', img === pic));
+            bg.classList.toggle('photo', !!pic);
             bg.classList.add('show');
         });
         row.addEventListener('mouseleave', () => bg.classList.remove('show'));
