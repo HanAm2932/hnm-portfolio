@@ -1616,3 +1616,85 @@ figure > img.wait {
         transition: none;
     }
 }
+
+/* ---------- loading screen: covers the page until everything on it has been fetched (main.js).
+   The <head> of each page sets html.loading before anything is drawn; without scripts the class is never set and the screen never shows ---------- */
+
+.loader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .4s, visibility 0s .4s;
+}
+
+html.loading {
+    overflow: hidden;
+}
+
+html.loading .loader {
+    opacity: 1;
+    visibility: visible;
+    transition: none;
+}
+
+/* a page already in the cache is ready at once: the name and the counter only appear if the wait is long enough to notice */
+.loader-in {
+    display: grid;
+    gap: 16px;
+    animation: loader-in .3s .3s both;
+}
+
+.loader-mark {
+    font-size: clamp(48px, 10vw, 96px);
+    font-weight: 700;
+    line-height: .8;
+    letter-spacing: -.07em;
+    color: var(--title);
+}
+
+.loader-mark i {
+    font-style: normal;
+    color: var(--accent);
+}
+
+/* the line under the name fills from the left as things arrive */
+.loader-bar {
+    height: 2px;
+    background: var(--line);
+}
+
+.loader-bar i {
+    display: block;
+    height: 100%;
+    background: var(--title);
+    transform: scaleX(var(--p, 0));
+    transform-origin: 0 50%;
+    transition: transform .25s;
+}
+
+.loader .mono {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--mid);
+}
+
+@keyframes loader-in {
+    from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .loader,
+    .loader-bar i {
+        transition: none;
+    }
+
+    .loader-in {
+        animation: none;
+    }
+}

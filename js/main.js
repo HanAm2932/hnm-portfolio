@@ -19,31 +19,56 @@
         img.addEventListener('error', done, { once: true });
     });
 
-    /* nothing waits for a hover or a click: once the page's own pictures are in, the ones behind them are fetched too:
-       hover backgrounds, the certificate sets, and the full-size version of every small picture. Three at a time, in page order.
-       The archive is left out: its 125 full-size pieces still arrive as each one nears the focus. */
-    const warm = () => {
-        if (navigator.connection && navigator.connection.saveData) return;
-        const urls = new Set();
+    /* ---------- loading screen: a visitor first meets a plain screen with a counter (.loader, the first thing in each page)
+       while everything the page can show is fetched: its own pictures and the ones behind them, which are the hover backgrounds,
+       the certificate sets and the full-size version of every small picture. Then the screen fades away and nothing is left to wait for.
+       The archive's 125 full-size pieces are left out: they still arrive as each one nears the focus.
+       After ten seconds the screen lifts anyway and the rest keeps arriving behind the skeletons. ---------- */
+    const loader = document.querySelector('.loader');
+    const behind = new Set();
+    if (!(navigator.connection && navigator.connection.saveData)) {
         const scan = from => {
-            from.querySelectorAll('[data-bg]').forEach(el => urls.add(el.dataset.bg));
+            from.querySelectorAll('[data-bg]').forEach(el => behind.add(el.dataset.bg));
             from.querySelectorAll('template').forEach(t => {
-                t.content.querySelectorAll('img[src]').forEach(img => urls.add(img.getAttribute('src')));
+                t.content.querySelectorAll('img[src]').forEach(img => behind.add(img.getAttribute('src')));
                 scan(t.content);
             });
         };
         scan(document);
-        document.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) urls.add(img.dataset.full); });
-        const queue = [...urls];
-        const next = () => {
-            if (!queue.length) return;
-            const img = new Image();
-            img.onload = img.onerror = next;
-            img.src = queue.shift();
-        };
-        for (let i = 0; i < 3; i++) next();
+        document.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) behind.add(img.dataset.full); });
+    }
+    const own = [...document.images].filter(img => img.getAttribute('src') && !img.complete);
+    const total = own.length + behind.size;
+    let got = 0, lifted = false;
+
+    const lift = () => {
+        if (lifted) return;
+        lifted = true;
+        /* everything was already in the browser's cache: no fade, the page is simply there */
+        if (loader && performance.now() < 400) loader.remove();
+        root.classList.remove('loading');
+        if (loader) setTimeout(() => loader.remove(), 600);
     };
-    if (document.readyState === 'complete') warm(); else addEventListener('load', warm);
+    const tally = () => {
+        got++;
+        if (loader) {
+            loader.style.setProperty('--p', got / total);
+            loader.querySelector('.loader-n').textContent = Math.round(got / total * 100) + '%';
+        }
+        if (got >= total) lift();
+    };
+    own.forEach(img => {
+        img.addEventListener('load', tally, { once: true });
+        img.addEventListener('error', tally, { once: true });
+    });
+    behind.forEach(src => {
+        const img = new Image();
+        img.fetchPriority = 'low';          /* the page's own pictures go first */
+        img.onload = img.onerror = tally;
+        img.src = src;
+    });
+    if (!total) lift();
+    setTimeout(lift, 10000);
 
     /* ---------- language: English is in the page, Vietnamese sits in data-vi ---------- */
     const texts = [...document.querySelectorAll('[data-vi]')];
