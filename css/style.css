@@ -1569,3 +1569,50 @@ h3,
     max-width: min(46vw, 720px);
     max-height: 76svh;
 }
+
+/* ---------- skeleton: until a picture has arrived its box shows a soft band of light moving across; then the picture fades in.
+   main.js marks a picture .wait while it is on its way and .in once it is there ---------- */
+
+.img:has(> img:not(.in)),
+.pline figure:has(> img:not(.in)),
+.strip figure:has(> img:not(.in)) {
+    background: linear-gradient(100deg, var(--fill) 35%, var(--paper) 50%, var(--fill) 65%) 100% 0 / 300% 100%;
+    animation: skeleton 1.4s linear infinite;
+}
+
+/* a box that holds a picture is plain, without the placeholder's cross and label, so neither shows through as the picture fades in */
+.img:has(> img) {
+    background: var(--fill);
+}
+
+.img:has(> img) > span {
+    visibility: hidden;
+}
+
+.img > img.in,
+figure > img.in {
+    transition: opacity .35s;
+}
+
+.img > img.wait,
+figure > img.wait {
+    opacity: 0;
+}
+
+@keyframes skeleton {
+    to { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .img:has(> img:not(.in)),
+    .pline figure:has(> img:not(.in)),
+    .strip figure:has(> img:not(.in)) {
+        background: var(--fill);
+        animation: none;
+    }
+
+    .img > img.in,
+    figure > img.in {
+        transition: none;
+    }
+}

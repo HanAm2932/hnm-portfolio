@@ -9,6 +9,42 @@
     measure();
     addEventListener('resize', measure);
 
+    /* ---------- pictures: every picture is fetched as the page opens. One that has not arrived yet is marked .wait,
+       so its box shows the skeleton (style.css); when it lands it fades in ---------- */
+    document.querySelectorAll('.img > img, figure > img').forEach(img => {
+        if (img.complete) { img.classList.add('in'); return; }
+        const done = () => { img.classList.remove('wait'); img.classList.add('in'); };
+        img.classList.add('wait');
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+    });
+
+    /* nothing waits for a hover or a click: once the page's own pictures are in, the ones behind them are fetched too:
+       hover backgrounds, the certificate sets, and the full-size version of every small picture. Three at a time, in page order.
+       The archive is left out: its 125 full-size pieces still arrive as each one nears the focus. */
+    const warm = () => {
+        if (navigator.connection && navigator.connection.saveData) return;
+        const urls = new Set();
+        const scan = from => {
+            from.querySelectorAll('[data-bg]').forEach(el => urls.add(el.dataset.bg));
+            from.querySelectorAll('template').forEach(t => {
+                t.content.querySelectorAll('img[src]').forEach(img => urls.add(img.getAttribute('src')));
+                scan(t.content);
+            });
+        };
+        scan(document);
+        document.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) urls.add(img.dataset.full); });
+        const queue = [...urls];
+        const next = () => {
+            if (!queue.length) return;
+            const img = new Image();
+            img.onload = img.onerror = next;
+            img.src = queue.shift();
+        };
+        for (let i = 0; i < 3; i++) next();
+    };
+    if (document.readyState === 'complete') warm(); else addEventListener('load', warm);
+
     /* ---------- language: English is in the page, Vietnamese sits in data-vi ---------- */
     const texts = [...document.querySelectorAll('[data-vi]')];
     texts.forEach(el => el.dataset.en = el.innerHTML);
