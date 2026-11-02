@@ -526,7 +526,8 @@
     }
 
     /* ---------- background letters: rows of HnM lie under the whole page, unseen, behind its text and pictures.
-       The mouse uncovers a small feathered patch of them and leaves a short trail; a click sends a wave out across them.
+       The mouse uncovers a small feathered patch of them and leaves a short trail. A click sends a wave out across them;
+       the lines that divide the page are dams to it, so it hits them and comes back.
        Inside a patch each letter keeps fading out and back in, in its own time, and returns in the next colour of the palette.
        The rows belong to the page, so scrolling carries them past the mouse, and the mouse leaves the same trail
        on the page as if it had moved. Only for a real mouse. ---------- */
@@ -536,7 +537,9 @@
         const GAP = 8;                      /* distance between two patches in the trail, px */
         const LIFE = 450;                   /* how long a trail patch lasts, ms */
         const SPOT = .6, TRAIL = .08;      /* opacity of the patch, and of a fresh trail patch */
-        const WAVE = .55, REACH = 400, BAND = 70, WAVE_LIFE = 800;  /* a click: opacity, how far it goes, its width (px), its length (ms) */
+        const WAVE = .55, BAND = 60, WAVE_LIFE = 1800, SPEED = .55;  /* a click: opacity, width (px), length (ms) and speed (px/ms) of the wave */
+        const BOUNCES = 3, ECHO = .7;       /* how many times it comes back from a dam, and how much of it is left each time */
+        const DAMS = '.nav, .hero, .hero-about, .sec, .block, .chat, .foot, .cells > *, .cols2 > div';
         const PULSE = 1500;                 /* one letter fades out and back, ms */
         const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -600,21 +603,70 @@
         const setLetters = (now, x0, y0, x1, y1) => {
             lc.clearRect(0, 0, innerWidth, innerHeight);
             const top = scrollY;
-            for (let r = Math.floor((y0 + top) / ROW); r * ROW - top < Math.min(y1, innerHeight); r++) {
-                for (let c = Math.max(0, Math.floor(x0 / TW)); c * TW < Math.min(x1, innerWidth); c++) {
+            /* with a wave out the whole screen is walked, but only the words under it or under a patch are set */
+            const from = rings.length ? 0 : x0, to = rings.length ? innerWidth : x1;
+            const upper = rings.length ? 0 : y0, lower = rings.length ? innerHeight : y1;
+            for (let r = Math.floor((upper + top) / ROW); r * ROW - top < Math.min(lower, innerHeight); r++) {
+                for (let c = Math.max(0, Math.floor(from / TW)); c * TW < Math.min(to, innerWidth); c++) {
+                    const wx = c * TW, wy = r * ROW - top;
+                    const inPatch = wx + TW > x0 && wx < x1 && wy + ROW > y0 && wy < y1;
+                    if (!inPatch && !rings.some(w => {
+                        if (wx + TW < w.x0 || wx > w.x1 || wy + ROW < w.y0 || wy > w.y1) return false;
+                        const d = Math.hypot(wx + TW / 2 - w.x, wy + ROW / 2 - w.y);
+                        return d > w.inner - TW && d < w.out + TW;
+                    })) continue;
                     glyphs.forEach((g, i) => {
                         /* every letter has its own moment in the pulse; it changes colour while it is unseen */
                         const h = (((c * 3 + i) * 73856093) ^ (r * 19349663)) >>> 0;
                         const at = now / PULSE + (h % 1000) / 1000;
                         const round = Math.floor(at);
                         lc.globalAlpha = still ? 1 : Math.min(1, Math.sin((at - round) * Math.PI) * 1.5);
-                        lc.drawImage(g.tiles[still ? 0 : (round + h) % 3], c * TW + g.at, r * ROW - top, g.w, ROW);
+                        lc.drawImage(g.tiles[still ? 0 : (round + h) % 3], wx + g.at, wy, g.w, ROW);
                     });
                 }
             }
         };
 
+        /* the room a click happens in: the nearest dam on each side, measured on the page. A side without one stays open */
+        const room = (cx, py) => {
+            const top = scrollY, walls = { left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity };
+            document.querySelectorAll(DAMS).forEach(el => {
+                const q = el.getBoundingClientRect();
+                if (!q.width || !q.height) return;
+                const cs = getComputedStyle(el);
+                const drawn = side => parseFloat(cs['border' + side + 'Width']) > 0 && cs['border' + side + 'Style'] !== 'none';
+                if (cx >= q.left && cx <= q.right) {
+                    [['Top', q.top + top], ['Bottom', q.bottom + top]].forEach(([side, at]) => {
+                        if (!drawn(side)) return;
+                        if (at > py) walls.bottom = Math.min(walls.bottom, at); else walls.top = Math.max(walls.top, at);
+                    });
+                }
+                if (py >= q.top + top && py <= q.bottom + top) {
+                    [['Left', q.left], ['Right', q.right]].forEach(([side, at]) => {
+                        if (!drawn(side)) return;
+                        if (at > cx) walls.right = Math.min(walls.right, at); else walls.left = Math.max(walls.left, at);
+                    });
+                }
+            });
+            return walls;
+        };
+
+        /* a wave coming back from a dam looks like a wave from the mirror image of the click behind that dam */
+        const mirrors = (at, lo, hi) => {
+            const list = [{ at, bounced: 0 }];
+            [[lo, hi], [hi, lo]].forEach(([first, second]) => {
+                let pos = at, wall = first;
+                for (let n = 1; n <= BOUNCES && Number.isFinite(wall); n++) {
+                    pos = 2 * wall - pos;
+                    list.push({ at: pos, bounced: n });
+                    wall = wall === first ? second : first;
+                }
+            });
+            return list;
+        };
+
         const trail = [], waves = [];
+        let rings = [];
         let lastTop = scrollY;
         let x = 0, y = 0, tx = 0, ty = 0, since = 0, show = 0, showGoal = 0, raf = 0, idle = 0, started = false;
 
@@ -669,19 +721,35 @@
             });
             if (show) stamp(x, y, 1, SPOT * show);
 
-            /* a wave is a soft ring that widens, quickly at first, and fades as it goes */
+            /* a wave is a soft ring that widens and fades, drawn together with its echoes and kept inside its room */
+            rings = [];
+            const top = scrollY;
             waves.forEach(w => {
-                const p = Math.max(0, (now - w.t) / WAVE_LIFE);
-                const r = REACH * (1 - Math.pow(1 - p, 3));
-                const out = r + BAND, inner = Math.max(0, r - BAND);
-                reach(w.x, w.y, out);
-                const ring = ctx.createRadialGradient(w.x, w.y, inner, w.x, w.y, out);
-                ring.addColorStop(0, 'rgba(0,0,0,0)');
-                ring.addColorStop((r - inner) / (out - inner), 'rgba(0,0,0,1)');
-                ring.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.globalAlpha = WAVE * (1 - p);
-                ctx.fillStyle = ring;
-                ctx.fillRect(w.x - out, w.y - out, out * 2, out * 2);
+                const age = Math.max(0, now - w.t);
+                const r = age * SPEED, out = r + BAND, inner = Math.max(0, r - BAND);
+                const x0r = Math.max(w.room.left, 0), x1r = Math.min(w.room.right, innerWidth);
+                const y0r = Math.max(w.room.top - top, 0), y1r = Math.min(w.room.bottom - top, innerHeight);
+                if (x1r <= x0r || y1r <= y0r) return;
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(x0r, y0r, x1r - x0r, y1r - y0r);
+                ctx.clip();
+                w.xs.forEach(ix => w.ys.forEach(iy => {
+                    const alpha = WAVE * (1 - age / WAVE_LIFE) * Math.pow(ECHO, ix.bounced + iy.bounced);
+                    const cx = ix.at, cy = iy.at - top;
+                    const near = Math.hypot(cx - Math.max(x0r, Math.min(x1r, cx)), cy - Math.max(y0r, Math.min(y1r, cy)));
+                    const far = Math.hypot(Math.max(cx - x0r, x1r - cx), Math.max(cy - y0r, y1r - cy));
+                    if (alpha < .02 || out < near || inner > far) return;
+                    const ring = ctx.createRadialGradient(cx, cy, inner, cx, cy, out);
+                    ring.addColorStop(0, 'rgba(0,0,0,0)');
+                    ring.addColorStop((r - inner) / (out - inner), 'rgba(0,0,0,1)');
+                    ring.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = ring;
+                    ctx.fillRect(x0r, y0r, x1r - x0r, y1r - y0r);
+                    rings.push({ x: cx, y: cy, inner, out, x0: x0r, y0: y0r, x1: x1r, y1: y1r });
+                }));
+                ctx.restore();
             });
 
             /* the letters show only where something was laid */
@@ -709,7 +777,8 @@
         }, { passive: true });
         addEventListener('pointerdown', e => {
             if (e.pointerType !== 'mouse' || still) return;
-            waves.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+            const py = e.clientY + scrollY, walls = room(e.clientX, py);
+            waves.push({ t: performance.now(), room: walls, xs: mirrors(e.clientX, walls.left, walls.right), ys: mirrors(py, walls.top, walls.bottom) });
             wake();
         }, { passive: true });
         /* the mouse left the window: the patch fades out and comes back where the mouse returns */
