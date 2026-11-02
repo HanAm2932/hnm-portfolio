@@ -810,6 +810,12 @@ dd {
     border-bottom: 1px solid var(--line);
 }
 
+/* the footer's top line is the only line there: the last section draws none of its own */
+.rail:has(+ .foot) > .sec:last-child,
+.rail:has(+ .foot) > .sec:last-child > .trow:last-child {
+    border-bottom: 0;
+}
+
 /* ---------- samples: one pinned screen, scrolling stacks the samples ---------- */
 
 .hscroll {
