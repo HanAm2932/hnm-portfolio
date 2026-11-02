@@ -16,6 +16,23 @@
     --screen: calc(100svh - var(--navh));
 }
 
+/* dark mode: the same roles, turned over. Text on the top bar and in the lightbox stays pale, so those keep the light --paper */
+:root[data-theme="dark"] {
+    --ink: #c4c4c4;
+    --mid: #9c9292;
+    --line: #463b3d;
+    --fill: #2a2325;
+    --paper: #191415;
+    --title: #e8e4da;
+    --accent: #ef4a50;
+    color-scheme: dark;
+}
+
+:root[data-theme="dark"] .nav,
+:root[data-theme="dark"] .set-tile {
+    --paper: #c4c4c4;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -84,7 +101,7 @@ h3 {
 .nav {
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 10; /* above everything on the page, under the lightbox */
     display: flex;
     flex-wrap: nowrap;
     align-items: stretch;
@@ -381,7 +398,8 @@ dd {
     cursor: pointer;
 }
 
-.trow > :first-child {
+.trow > :first-child:not(.pix),
+.trow > .pix + * {
     color: var(--mid);
 }
 
@@ -409,10 +427,31 @@ dd {
 .foot {
     padding: 56px 20px 88px;
     border-top: 1px solid var(--ink);
-    color: var(--mid);
+    color: var(--ink);
     font-size: 16px;
     line-height: 2;
     scroll-snap-align: end;
+    position: relative;
+    min-height: min(580px, var(--screen));
+}
+
+/* Hanoi, drawn by main.js behind the footer's text */
+.foot canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.foot p {
+    position: relative;
+}
+
+@media (max-width: 760px) {
+    .foot {
+        min-height: 620px;
+    }
 }
 
 .foot u {
@@ -600,8 +639,24 @@ dd {
 }
 
 /* hovering a project swaps the background of its own column; the hovered row stays a clean strip of paper */
-.trow[data-img]:hover {
-    background: var(--paper);
+.trow[data-img] {
+    position: relative;
+}
+
+.trow[data-img] > :not(.pix) {
+    position: relative;
+    z-index: 1;
+}
+
+/* the deep red pixel sweep lies behind the row's text (drawn by js/main.js) */
+.pix {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    image-rendering: pixelated;
 }
 
 .cols2 > div {
@@ -718,6 +773,21 @@ dd {
 
 .cols2 .trow:last-child {
     border-bottom: 1px solid var(--line);
+}
+
+/* stacked variant: each table gets its own full screen, one above the other */
+.cols2.stack {
+    grid-template-columns: 1fr;
+}
+
+.cols2.stack > div {
+    min-height: var(--screen);
+    scroll-snap-align: start;
+}
+
+.cols2.stack > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--ink);
 }
 
 @media (max-width: 760px) {
@@ -939,9 +1009,13 @@ figure {
 .nav a:hover,
 .plain:hover,
 .back:hover,
-.langbtn:hover,
-.trow[data-img]:hover > :nth-child(2) {
+.langbtn:hover {
     color: var(--accent);
+}
+
+/* on the deep red sweep the row's text turns to paper */
+.trow[data-img]:hover > :not(.pix) {
+    color: var(--paper);
 }
 
 .langbtn u.on {
@@ -1346,6 +1420,7 @@ h3,
     flex: 1;
     min-height: 100px;
     touch-action: pan-y;
+    isolation: isolate; /* the photos' own z-index stays inside the line */
 }
 
 /* the line being used rises above its neighbours, so its opened photos overlap them */
@@ -1392,6 +1467,82 @@ h3,
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* line or gallery: two buttons at the end of the section's title */
+.head:has(.pview) {
+    position: relative;
+}
+
+.pview {
+    position: absolute;
+    right: 20px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+}
+
+.pview button {
+    display: block;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.pview svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.pview button:hover {
+    border-color: var(--ink);
+}
+
+.pview button[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.pline::before {
+    transition: opacity .4s;
+}
+
+.pline.grid::before {
+    opacity: 0;
+}
+
+.pline.grid figure {
+    cursor: zoom-in;
+}
+
+/* letters behind the photos: h, n, m in any case, running left while the photos run right */
+.plines {
+    position: relative;
+}
+
+.pbg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: .6;
+}
+
+.pbg canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.pline {
+    z-index: 1;
+    overflow-x: clip; /* the line runs past both edges of the screen */
 }
 
 /* the list sits at the bottom, under the line */
@@ -1728,5 +1879,14 @@ html.loading .loader {
     width: 100%;
     height: 100%;
     z-index: -1;
+    pointer-events: none;
+}
+
+/* home: the full stop as a stick figure; it lies over the part of the hero that holds the name */
+.stick {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
     pointer-events: none;
 }

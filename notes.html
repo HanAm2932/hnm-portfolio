@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notes — Nam</title>
+    <meta name="description" content="Notes on product, design and research by Bùi Hà Nam.">
+    <script>document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'</script>
+    <link rel="stylesheet" href="css/style.css?v=22">
+    <script>(function (d) { try { if (sessionStorage.warm) return; } catch (e) { } d.classList.add('loading'); setTimeout(function () { d.classList.remove('loading'); }, 15000); })(document.documentElement)</script>
+</head>
+
+<body>
+    <div class="loader" role="status">
+        <div class="loader-in">
+            <span class="loader-mark">Hnam<i>.</i></span>
+            <span class="loader-bar"><i></i></span>
+            <span class="mono"><span data-vi="Đang tải">Loading</span><span class="loader-n" aria-hidden="true">0%</span></span>
+        </div>
+    </div>
+    <main class="page" id="notes">
+        <div class="sheet">
+            <header class="nav">
+                <a class="logo" href="index.html" aria-label="Nam, home"><img src="img/logo.png" alt="" width="36" height="36"></a>
+                <div class="links"><a href="index.html" data-vi="Trang chủ">Home</a><a href="work.html" data-vi="Dự án">Work</a><a href="notes.html" class="cur" aria-current="page" data-vi="Ghi chép">Notes</a><a href="contact.html" data-vi="Liên hệ">Contact</a></div>
+                <button class="langbtn" type="button" aria-label="Switch language"><span><u data-l="vi">VI</u> / <u data-l="en">EN</u></span></button>
+            </header>
+
+            <div class="rail">
+
+                <section class="sec snap">
+                    <div class="head">
+                        <div class="kicker" data-vi="Mình đang nghĩ">I'm thinking</div>
+                        <h1 class="big" data-vi="về gì.">about.</h1>
+                        <p class="sub" data-vi="Sản phẩm, thiết kế, nghiên cứu, và những thứ mình đang học.">Product, design, research, and whatever I'm learning.</p>
+                    </div>
+
+                    <div class="trow two"><span class="mono">DD Mon YYYY</span><u data-vi="Tiêu đề bài viết">Post title</u></div>
+                    <div class="trow two"><span class="mono">DD Mon YYYY</span><u data-vi="Technostress ảnh hưởng thế nào đến nhân viên Gen Z">What technostress does to Gen Z employees</u></div>
+                    <div class="trow two"><span class="mono">DD Mon YYYY</span><u data-vi="Vì sao Gen Z Hà Nội sẽ, hoặc sẽ không, mua xe máy điện">Why Gen Z in Hanoi would, or wouldn't, buy an electric motorbike</u></div>
+                    <div class="trow two"><span class="mono">DD Mon YYYY</span><u data-vi="Tiêu đề bài viết">Post title</u></div>
+                </section>
+
+            </div>
+
+            <footer class="foot">
+                <p data-vi="Dựng từ đầu với <u>Claude Code</u> và <u>Figma</u>.">Built from scratch with <u>Claude Code</u> and <u>Figma</u>.</p>
+                <p data-vi="Thiết kế, câu chữ và code © 2026 Bùi Hà Nam.">Design, words, and code © 2026 Bùi Hà Nam.</p>
+                <p data-vi="Pha tại Hà Nội, từng ly pour-over một.">Brewed in Hanoi, one pour-over at a time.</p>
+                <p>☕</p>
+            </footer>
+        </div>
+    </main>
+
+    <script src="js/main.js?v=37"></script>
+</body>
+
+</html>
