@@ -1129,79 +1129,56 @@
         fit();
     }
 
-    /* ---------- the footer: Hanoi, with the letters h, n, m as its pixels. Hoàn Kiếm lake and Tháp Rùa in front,
-       the yellow old quarter behind them, Nhà thờ Lớn, Cột Cờ and Landmark 72 above, Long Biên bridge on the right.
-       The places are put together for the picture, not as on a map. Sunny in light mode, at night in dark mode ---------- */
+    /* ---------- the footer: Hanoi, with the letters h, n, m as its pixels. Only two buildings: Tháp Rùa in Hoàn Kiếm lake
+       and the city post office across the water, behind a line of trees. Rain in light mode, fireworks in dark mode ---------- */
     const foot = document.querySelector('.foot');
     if (foot) {
         const scene = document.createElement('canvas');
         scene.setAttribute('aria-hidden', 'true');
         foot.prepend(scene);
         const STEP = 140;                   /* time between two frames, ms; slow on purpose, it should step like pixels */
-        const RAYS = 14;                    /* rays around the sun */
-        const CLOUDS = 4;
+        const CLOUDS = 5;
+        const DROPS = 1 / 28;               /* raindrops per letter of sky */
+        const RIPPLE = 1.5;                 /* how long a ring lasts on the lake, s */
+        const SHELLS = 4;                   /* fireworks in the air, each on its own cycle */
+        const SPARKS = 34;
+        const CLIMB = .9, BURST = 2;        /* a shell's way up and its bloom, s */
         const DAY = {
-            far: '#8a8080', near: '#3f3233', pane: '#c4c4c4', walls: ['#b8892f', '#c49a45', '#ad9c74'], shutter: '#3e5a48', roof: '#761f21', rail: '#504141',
-            stone: '#5f5354', dark: '#d9d6cf', leaf: ['#4d6b4f', '#3e5a48'], bark: '#504141', steel: '#3f3233', pier: '#6e6465', train: '#3e5a48', glass: '#c4c4c4', water: '#83a096', glint: '#f6e09a',
-            flag: '#d91b24', star: '#f6e09a', sun: '#d91b24', ray: '#f6e09a', cloud: '#f7f5f1', shade: '#dedbd5'
+            pane: '#c4c4c4', roof: '#761f21', stone: '#5f5354', dark: '#d9d6cf', plinth: '#6e6465', leaf: ['#4d6b4f', '#3e5a48'], bark: '#504141', steel: '#3f3233', water: '#83a096',
+            flag: '#d91b24', star: '#f6e09a', sky: ['#bcbbbb', '#b5b4b5', '#adadaf', '#a6a6a9'], cloud: '#a8a7a9', shade: '#99989b', rain: '#4f6570', ripple: '#e6e4de'
         };
         const NIGHT = {
-            far: '#7a6a6e', near: '#85747a', walls: ['#6b5636', '#75603e', '#5e5750'], shutter: 'pane', roof: '#5b2a2c', rail: '#3f3437',
-            stone: '#a39a8c', dark: '#e8c078', leaf: ['#2f4034', '#2a3a30'], bark: '#3f3437', steel: '#85747a', pier: '#54464a', train: '#54464a', glass: '#e8c078', water: '#34464a', glint: '#e8e4da',
-            flag: '#d91b24', star: '#e8c078', sky: ['#2a2224', '#33282a', '#472729', '#62292b'], moon: '#e8e4da', lamp: '#c4c4c4', panes: ['#e8c078', '#e8c078', '#c4c4c4', '#d91b24']
+            roof: '#5b2a2c', stone: '#a39a8c', dark: '#e8c078', plinth: '#54464a', leaf: ['#2f4034', '#2a3a30'], bark: '#3f3437', steel: '#85747a', glass: '#e8c078', water: '#34464a', glint: '#e8e4da',
+            flag: '#d91b24', star: '#e8c078', sky: ['#2a2224', '#33282a', '#472729', '#62292b'], moon: '#e8e4da', lamp: '#c4c4c4', panes: ['#e8c078', '#e8c078', '#c4c4c4', '#d91b24'],
+            bloom: [['#d91b24', '#e8c078'], ['#e8c078', '#e8e4da'], ['#e8e4da', '#ef4a50'], ['#83a096', '#e8e4da']]
         };
-        /* the landmarks, drawn by hand: each character is a colour of the palette above, s = stone, a = dark openings, r = roof, b = base, g = leaves */
+        /* drawn by hand: each character is a colour of the palette above, s = stone, a = dark openings, r = roof, p = plinth, g = leaves */
         const THAP_RUA = [
-            '.......r.......',
-            '......rrr......',
-            '.....rrrrr.....',
-            '......sss......',
-            '......sas......',
-            '...rrrrrrrrr...',
-            '....sssssss....',
-            '....sasasas....',
-            '.rrrrrrrrrrrrr.',
-            '..sssssssssss..',
-            '..saasaasaass..',
-            '..saasaasaass..',
-            '..sssssssssss..',
-            'ggggggggggggggg'
+            '...........r...........',
+            '..........rrr..........',
+            '.........rrrrr.........',
+            '........rrrrrrr........',
+            '.........sssss.........',
+            '.........sasas.........',
+            '.........sssss.........',
+            '.......sssssssss.......',
+            '.......rrrrrrrrr.......',
+            '........sssssss........',
+            '........sasasas........',
+            '........sasasas........',
+            '........sssssss........',
+            '.....rrrrrrrrrrrrr.....',
+            '.....s.s.s.s.s.s.s.....',
+            '......sssssssssss......',
+            '......saasaaasaas......',
+            '......saasaaasaas......',
+            '......saasaaasaas......',
+            '......sssssssssss......',
+            '...ppppppppppppppppp...',
+            '.ggggggggggggggggggggg.',
+            'ggggggggggggggggggggggg'
         ];
-        const NHA_THO = [
-            '..r.......r..',
-            '..s.......s..',
-            '.sss.....sss.',
-            '.sas.....sas.',
-            '.sss.....sss.',
-            '.sas.sss.sas.',
-            '.sssssssssss.',
-            '.sasssasssas.',
-            '.sssaaaaasss.',
-            '.sssssssssss.',
-            '.sasssasssas.',
-            '.sssssssssss.'
-        ];
-        const COT_CO = [
-            '....|ffff',
-            '....|f*ff',
-            '....|ffff',
-            '....|....',
-            '...sss...',
-            '...rrr...',
-            '...sss...',
-            '...sas...',
-            '...sss...',
-            '...sas...',
-            '...sss...',
-            '...sas...',
-            '...sss...',
-            '..sssss..',
-            '.ppppppp.',
-            '.ppapapp.',
-            'ppppppppp',
-            'ppapppapp'
-        ];
-        const KEYS = t => ({ s: t.stone, a: t.dark, r: t.roof, g: t.leaf[0], f: t.flag, '*': t.star, '|': t.steel, p: t.pier });
+        const KEYS = t => ({ s: t.stone, a: t.dark, r: t.roof, p: t.plinth, g: t.leaf[0] });
         const LETTERS = 'hHnNmM';
         const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];   /* fades the rays in an even pattern, as pixel art does */
         const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1213,18 +1190,12 @@
         const ctx = scene.getContext('2d');
         const base = document.createElement('canvas');      /* what does not move */
         const bg = base.getContext('2d');
-        let CW, CH, W, H, C, R, city, panes, stars, clouds, sunX, sunY, sunR, shore, rise, deck, bankX, tip, quiet, timer;
+        let CW, CH, W, H, C, R, city, panes, stars, clouds, drops, skyTop, moonX, moonY, moonR, shore, rise, quiet, left, isle, timer;
 
         const hanoi = tone => {
             let seed = 7;
             const rand = () => noise(seed++, 3.7);
             const put = (x, y, paint) => { if (x >= 0 && x < C && y >= 0 && y < R) city[y * C + x] = paint; };
-            const block = (x0, w, h, wall) => {
-                const top = shore - h;
-                for (let y = top; y < shore; y++) for (let x = x0; x < x0 + w; x++) {
-                    put(x, y, x > x0 && x < x0 + w - 1 && y > top && (x - x0) % 2 === 0 && (y - top) % 3 === 0 ? 'pane' : wall);
-                }
-            };
             const sprite = (rows, x0, bottom, size = 1) => {
                 const keys = KEYS(tone), tall = Math.round(rows.length * size), wide = Math.round(rows[0].length * size);
                 for (let y = 0; y < tall; y++) for (let x = 0; x < wide; x++) {
@@ -1233,41 +1204,33 @@
                 }
             };
 
-            /* Landmark 72, the tallest of the city, and Lotte Center beside it */
-            const t = C * .58 | 0, top = rise * .86 | 0;
-            block(t, 5, rise * .56 | 0, tone.far);
-            block(t + 12, 5, rise * .56 | 0, tone.far);
-            block(t + 4, 9, rise * .8 | 0, tone.far);
-            block(t + 6, 5, top, tone.far);
-            for (let i = 0; i < 4; i++) put(t + 8, shore - top - i - 1, tone.far);
-            tip = { x: t + 8, y: shore - top - 4 };
-            /* a phone has no room for everything: Lotte Center goes, the landmarks are smaller */
+            /* the post office: a long block of narrow windows, the clock tower rising from it */
             const narrow = C < 100;
-            if (!narrow) {
-                const l = C * .69 | 0, lotte = rise * .68 | 0;
-                block(l, 7, lotte, tone.far);
-                block(l + 1, 2, lotte + 2, tone.far);
-                block(l + 4, 2, lotte + 2, tone.far);
-            }
-
-            sprite(NHA_THO, C * (narrow ? .08 : .29) | 0, shore - 3, narrow ? 1 : 1.6);
-            sprite(COT_CO, C * .46 | 0, shore - 3, narrow ? 1 : 1.35);
-
-            /* the old quarter: narrow houses in Hanoi yellow, a tiled roof, green shutters, a balcony on each floor, a shop at the street */
-            bankX = C * .62 | 0;
-            for (let x = 0; x < bankX;) {
-                const w = 5 + rand() * 4 | 0, h = 6 + rand() * 5 | 0, top = shore - h, wall = tone.walls[rand() * 3 | 0];
-                for (let y = top; y < shore; y++) for (let i = 0; i < w; i++) {
-                    const row = y - top, floor = (row - 2) % 4;
-                    let paint = wall;
-                    if (row < 2) paint = i >= 1 - row && i < w - 1 + row ? tone.roof : null;
-                    else if (y >= shore - 2) paint = i % 3 ? tone.rail : wall;
-                    else if (floor === 0) paint = tone.rail;
-                    else if (floor < 3 && i % 3) paint = tone.shutter;
-                    if (paint) put(x + i, y, paint);
+            const postOffice = (x0, wide, tall) => {
+                const wing = Math.round(tall * .56), tw = Math.max(9, wide * .2 | 0) | 1, tx = x0 + (wide * .34 | 0), top = shore - tall;
+                for (let y = shore - wing; y < shore; y++) for (let x = x0; x < x0 + wide; x++) {
+                    const row = y - shore + wing;
+                    put(x, y, row === 0 ? tone.steel : row % 4 && (x - x0) % 3 ? 'pane' : tone.stone);
                 }
-                x += w;
-            }
+                for (let y = top; y < shore; y++) for (let i = 0; i < tw; i++) {
+                    const row = y - top;
+                    put(tx + i, y, row === 0 ? tone.steel : row > 7 && i % 2 && row % 5 ? 'pane' : tone.stone);
+                }
+                /* the clock, near the top of the tower */
+                const cx = tx + (tw >> 1);
+                for (let y = -2; y <= 2; y++) for (let x = -3; x <= 3; x++) {
+                    if (Math.hypot(x / 3.4, y / 2.4) < 1) put(cx + x, top + 4 + y, tone.dark);
+                }
+                put(cx, top + 3, tone.steel); put(cx, top + 4, tone.steel); put(cx + 1, top + 4, tone.steel); put(cx + 2, top + 4, tone.steel);
+                for (let i = 1; i < 7; i++) put(cx, top - i, tone.steel);
+                for (let y = 4; y < 7; y++) for (let x = 1; x < 6; x++) put(cx + x, top - y, tone.flag);
+                put(cx + 3, top - 5, tone.star);
+            };
+            postOffice(C * (narrow ? .4 : .46) | 0, C * (narrow ? .58 : .4) | 0, Math.min(rise * .86, C * .4) | 0);
+            /* Tháp Rùa's place on the far bank stays open, so it stands against the sky */
+            const tower = narrow ? C * .05 | 0 : C * .2 | 0, size = narrow ? .8 : 1, tw = Math.round(THAP_RUA[0].length * size);
+            const open = x => x > tower && x < tower + tw;
+            isle = [tower - 3, tower + tw + 3];
 
             /* a willow on the left, its strands falling to the water */
             const crown = (cx, bottom, rx, ry) => {
@@ -1276,10 +1239,12 @@
                     if (d < .85 + noise(x, y) * .3) put(x, y, tone.leaf[noise(y, x) * 2 | 0]);
                 }
             };
-            for (let x = 3; x < bankX + 2;) {
+            for (let x = 3; x < C + 2;) {
                 const rx = 3 + rand() * 3 | 0, ry = 2 + rand() | 0;
-                put(x, shore - 1, tone.bark);
-                crown(x, shore - 2, rx, ry);
+                if (!open(x - rx) && !open(x + rx)) {
+                    put(x, shore - 1, tone.bark);
+                    crown(x, shore - 2, rx, ry);
+                }
                 x += rx * 2 + 4 + (rand() * 6 | 0);
             }
             crown(5, shore - 8, 8, 3);
@@ -1289,19 +1254,8 @@
                 for (let y = shore - 9; y < end; y++) if (noise(x, y) < .8) put(x, y, tone.leaf[(x & 2) >> 1]);
             }
 
-            /* Long Biên: steel humps on stone piers, one after the other, over the water */
-            deck = shore - 2;
-            const span = 26, tall = 13;
-            for (let x = bankX; x < C; x++) {
-                const i = (x - bankX) % span, top = deck - Math.round(tall * Math.sin(Math.PI * i / span) ** .6);
-                for (let y = top; y <= deck; y++) {
-                    if (y === top || y === deck || (x + y) % 5 === 0 || (x - y) % 5 === 0) put(x, y, tone.steel);
-                }
-                if (i < 2) for (let y = deck + 1; y < R; y++) put(x, y, tone.pier);
-            }
-
             /* Tháp Rùa on its island, in the lake */
-            sprite(THAP_RUA, C * .28 | 0, R - 2);
+            sprite(THAP_RUA, tower, R - 2, size);
         };
 
         const makeClouds = top => {
@@ -1338,18 +1292,20 @@
             }
             C = Math.ceil(W / CW);
             R = Math.ceil(H / CH);
-            shore = R - Math.max(16, R * .3 | 0);
+            shore = R - Math.max(18, R * .36 | 0);
             /* on a phone the footer's text fills the width, so the sky under it is all the picture has */
             const lines = [...foot.querySelectorAll('p')], box = foot.getBoundingClientRect();
             const text = Math.ceil((lines[lines.length - 1].getBoundingClientRect().bottom - box.top) / CH);
             rise = fine ? shore - text - 2 : shore;
+            skyTop = fine ? text + 1 : 1;
             /* the footer's text keeps a clear box: no letter of the picture is ever set inside it */
             const from = Math.floor((lines[0].getBoundingClientRect().top - box.top) / CH) - 1;
             const wide = Math.max(...lines.map(p => { const r = document.createRange(); r.selectNodeContents(p); return r.getBoundingClientRect().right - box.left; })) + 16;
             quiet = (x, y) => y >= from && y <= text && x * CW < wide;
-            sunX = C * .77;
-            sunR = Math.min(R * .15, C * .1);
-            sunY = fine ? text + sunR + 2 : R * .2;
+            left = fine ? 0 : Math.ceil(wide / CW);
+            moonX = C * .8;
+            moonR = Math.min(R * .13, C * .09);
+            moonY = fine ? text + moonR + 2 : R * .2;
             const night = isNight(), tone = night ? NIGHT : DAY;
             city = new Array(C * R).fill(null);
             hanoi(tone);
@@ -1362,45 +1318,63 @@
                 if (paint === 'pane') {
                     if (night) { if (noise(x, y) < .62) panes.push([x, y, NIGHT.panes[noise(y, x) * 4 | 0], noise(x * 2, y * 3)]); continue; }
                     paint = noise(x, y) < .4 ? DAY.pane : null;
-                } else if (!paint && night && y < shore) {
-                    const dx = (x - sunX) * CW / CH, dy = y - sunY, r = Math.hypot(dx, dy);
-                    if (r < sunR && Math.hypot(dx - sunR * .5, dy + sunR * .15) > sunR * .85) paint = NIGHT.moon;
-                    else if (y < R * .7 && noise(x, y * 2) < .012) { stars.push([x, y, noise(y, x)]); continue; }
-                    else if (noise(x, y) < .42) {
-                        /* the sky warms toward the street lights, in steps */
+                } else if (!paint && y < shore) {
+                    const dx = (x - moonX) * CW / CH, dy = y - moonY, r = Math.hypot(dx, dy);
+                    if (night && r < moonR && Math.hypot(dx - moonR * .5, dy + moonR * .15) > moonR * .85) paint = NIGHT.moon;
+                    else if (night && y < R * .7 && noise(x, y * 2) < .012) { stars.push([x, y, noise(y, x)]); continue; }
+                    else if (y >= skyTop && noise(x, y) < (night ? .42 : .2)) {
+                        /* the sky warms toward the street lights at night, darkens toward the rain by day, in steps */
                         const glow = (y / shore) ** 2.2 * 3.6 + noise(y, x) * .8;
-                        paint = NIGHT.sky[Math.min(3, glow | 0)];
+                        paint = tone.sky[Math.min(3, glow | 0)];
                     }
                 }
                 if (paint) { bg.fillStyle = paint; bg.fillText(letter(x, y), x * CW, y * CH); }
             }
-            if (!night) makeClouds(fine ? text + 1 : 1);
-            draw(performance.now() / 1000);
+            if (!night) {
+                makeClouds(skyTop);
+                const span = shore - skyTop;
+                drops = Array.from({ length: C * span * DROPS | 0 }, (_, i) => ({ x: noise(i, 1.3) * C, at: noise(i, 2.9) * span, v: 13 + noise(i, 4.1) * 7 }));
+            }
+            draw(still ? 1.7 : performance.now() / 1000);
         };
 
-        const sky = t => {
-            const over = new Int8Array(C * R);
+        /* rain falls slantwise out of the clouds in streaks, past the post office's windows, and stops at the far bank */
+        const rain = t => {
+            const over = new Int8Array(C * R), span = shore - skyTop;
             for (const c of clouds) {
-                const left = Math.floor((c.x + t * c.v) % (C + c.w)) - c.w;
-                for (const [x, y, low] of c.cells) if (left + x >= 0 && left + x < C) over[(c.y + y) * C + left + x] = low ? 2 : 1;
+                const from = Math.floor((c.x + t * c.v) % (C + c.w)) - c.w;
+                for (const [x, y, low] of c.cells) if (from + x >= 0 && from + x < C) over[(c.y + y) * C + from + x] = low ? 2 : 1;
             }
-            const reach = C * .5;
+            ctx.fillStyle = DAY.rain;
+            for (const d of drops) {
+                const head = skyTop + (d.at + t * d.v) % span | 0;
+                for (let k = 0; k < 6; k++) {
+                    const y = head - k, x = ((d.x - y * .3) % C + C) % C | 0, at = y * C + x;
+                    if (y < skyTop || y >= shore || (city[at] && city[at] !== 'pane') || over[at] || quiet(x, y)) continue;
+                    ctx.globalAlpha = 1 - k * .15;
+                    ctx.fillText(letter(x, y), x * CW, y * CH);
+                }
+            }
+            ctx.globalAlpha = 1;
             for (let y = 0; y < shore; y++) for (let x = 0; x < C; x++) {
                 const at = y * C + x;
-                if (city[at] || quiet(x, y)) continue;
-                let paint = null;
-                if (over[at]) paint = over[at] === 1 ? DAY.cloud : DAY.shade;
-                else {
-                    const dx = (x - sunX) * CW / CH, dy = y - sunY, r = Math.hypot(dx, dy);
-                    if (r < sunR) paint = DAY.sun;
-                    else if (r < sunR * 1.3) { if (dither(x, y) < (1.3 - r / sunR) * 2.6) paint = DAY.sun; }
-                    else {
-                        const a = Math.atan2(dy, dx) + t * .012;
-                        const fade = 1 - r * CH / CW / reach;
-                        if (Math.sin(a * RAYS) + .4 * Math.sin(a * 5 + 1) > .45 && dither(x, y) < fade) paint = DAY.ray;
-                    }
+                if (!over[at] || city[at] || quiet(x, y)) continue;
+                ctx.fillStyle = over[at] === 1 ? DAY.cloud : DAY.shade;
+                ctx.fillText(letter(x, y), x * CW, y * CH);
+            }
+        };
+
+        /* where the rain meets the lake: a flat ring that opens and thins out */
+        const ripples = t => {
+            ctx.fillStyle = DAY.ripple;
+            for (let i = 0, n = C / 6 | 0; i < n; i++) {
+                const age = t / RIPPLE + noise(i, 6.3) * 9, round = Math.floor(age), u = age - round;
+                const cx = noise(i, round) * C, cy = shore + 1 + noise(round, i) * (R - shore - 2), r = 1 + u * 5;
+                for (let a = 0; a < 14; a++) {
+                    const x = cx + Math.cos(a * Math.PI / 7) * r * CH / CW | 0, y = cy + Math.sin(a * Math.PI / 7) * r * .32 | 0;
+                    if (x < 0 || x >= C || y >= R || city[y * C + x] || (x > isle[0] && x < isle[1]) || dither(x, y) > 1 - u) continue;
+                    ctx.fillText(letter(x, y), x * CW, y * CH);
                 }
-                if (paint) { ctx.fillStyle = paint; ctx.fillText(letter(x, y), x * CW, y * CH); }
             }
         };
 
@@ -1413,21 +1387,47 @@
                 ctx.fillStyle = paint;
                 ctx.fillText(letter(x, y), x * CW, y * CH);
             }
-            if (Math.sin(t * 2.5) > 0) { ctx.fillStyle = NIGHT.flag; ctx.fillText(letter(tip.x, tip.y), tip.x * CW, tip.y * CH); }
         };
 
-        /* a train crosses Long Biên, slowly; the steel stays in front of it */
-        const train = (t, tone) => {
-            const left = C - (t * 2.2 % (C - bankX + 40)) | 0;
-            for (let i = 0; i < 24; i++) for (let row = 0; row < 2; row++) {
-                const x = left + i, y = deck - 2 + row;
-                if (x < bankX || x >= C || city[y * C + x]) continue;
-                ctx.fillStyle = row === 0 && i % 3 ? tone.glass : tone.train;
-                ctx.fillText(letter(x, y), x * CW, y * CH);
+        /* fireworks over the lake: a shell climbs from behind the trees, opens in two colours, sags and fades.
+           Each spark also shows in the water */
+        const spark = (x, y, paint) => {
+            x |= 0; y |= 0;
+            if (x < 0 || x >= C || y < skyTop || y >= shore || city[y * C + x] || quiet(x, y)) return;
+            ctx.fillStyle = paint;
+            ctx.fillText(letter(x, y), x * CW, y * CH);
+            const down = shore + (shore - y) * (R - shore) / shore | 0;
+            if (down < R && !city[down * C + x] && noise(x + down, Math.floor(y / 2)) < .5) {
+                ctx.globalAlpha = .4;
+                ctx.fillText(letter(x, down), x * CW, down * CH);
+                ctx.globalAlpha = 1;
+            }
+        };
+        const fireworks = t => {
+            const size = Math.min(rise * .3, C * .1), wide = CH / CW;
+            for (let i = 0; i < SHELLS; i++) {
+                const cycle = CLIMB + BURST + 1.1 + i * .6, age = t / cycle + i * .27, round = Math.floor(age), now = (age - round) * cycle;
+                const from = left + size * wide, x = from + noise(round, i + 1) * (C - size * wide - from);
+                const y = skyTop + size * (1 + noise(i + 1, round)) * .9;
+                const [one, two] = NIGHT.bloom[(round + i) % NIGHT.bloom.length];
+                if (now < CLIMB) {
+                    const head = shore + (y - shore) * (now / CLIMB) ** .6;
+                    for (let k = 0; k < 3; k++) spark(x + Math.sin(head + k) * .6, head + k * 2, k ? two : one);
+                } else if (now < CLIMB + BURST) {
+                    const u = (now - CLIMB) / BURST, open = 1 - (1 - u) ** 3;
+                    for (let k = 0; k < SPARKS; k++) {
+                        const inner = k & 1, a = (k + noise(k, round) * .6) / SPARKS * Math.PI * 2;
+                        const reach = size * (inner ? .55 : .95 + noise(round, k) * .2) * open;
+                        const sx = x + Math.cos(a) * reach * wide, sy = y + Math.sin(a) * reach + u * u * 5;
+                        if (dither(sx | 0, sy | 0) > 1.15 - u * u) continue;
+                        spark(sx, sy, inner ? two : one);
+                        if (u < .55) spark(x + Math.cos(a) * reach * .8 * wide, y + Math.sin(a) * reach * .8 + u * u * 5, two);
+                    }
+                }
             }
         };
 
-        /* the lake: small letters of water, with the city and the sun or moon broken up in it */
+        /* the lake: small letters of water, with the city and the moon broken up in it */
         const lake = (t, tone) => {
             const now = Math.floor(t * 1.2);
             for (let y = shore; y < R; y++) {
@@ -1436,12 +1436,12 @@
                     if (city[y * C + x]) continue;
                     const up = city[from + x + wave];
                     const paint = up === 'pane' ? (tone === NIGHT ? tone.glass : null) : up;
-                    if (Math.abs(x - sunX - wave * 2) < sunR * (CH / CW) * (1 - (y - shore) / (R - shore) * .4) && dither(x + wave, y) < .22) {
+                    if (tone === NIGHT && Math.abs(x - moonX - wave * 2) < moonR * (CH / CW) * (1 - (y - shore) / (R - shore) * .4) && dither(x + wave, y) < .22) {
                         ctx.fillStyle = tone.glint;
                     } else if (paint && noise(x + now, y) < .3) {
                         ctx.globalAlpha = .4;
                         ctx.fillStyle = paint;
-                    } else if (noise(Math.floor((x + y * 5 + now * (y & 1 ? 1 : -1)) / 7), y) < .22) {
+                    } else if (!(x > isle[0] && x < isle[1]) && noise(Math.floor((x + y * 5 + now * (y & 1 ? 1 : -1)) / 7), y) < (tone === NIGHT ? .22 : .13)) {
                         /* long flat strokes, not specks, read as water */
                         ctx.fillStyle = tone.water;
                     } else continue;
@@ -1455,9 +1455,9 @@
             ctx.clearRect(0, 0, W, H);
             ctx.drawImage(base, 0, 0, W, H);
             const tone = isNight() ? NIGHT : DAY;
-            (tone === NIGHT ? lights : sky)(t);
-            train(t, tone);
+            (tone === NIGHT ? lights : rain)(t);
             lake(t, tone);
+            (tone === NIGHT ? fireworks : ripples)(t);
         }
 
         const tick = () => {
