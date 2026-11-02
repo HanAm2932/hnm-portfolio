@@ -425,6 +425,7 @@
                 const mean = tall * fit / rows.length;
                 if (!best || mean > best.mean) best = { rows, heights, fit, mean, used: tall * fit + gaps };
             }
+            if (!best) return;      /* no width yet, the page is laid out in a hidden frame */
             let y = -best.used / 2;
             best.rows.forEach((row, r) => {
                 const h = best.heights[r] * best.fit;
