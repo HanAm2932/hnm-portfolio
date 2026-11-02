@@ -23,7 +23,7 @@
        while the whole site is fetched: this page's pictures and the ones behind them (hover backgrounds, the certificate sets,
        the full-size version of every small picture), and the same for every other page, found by following the links.
        Then the screen fades away and nothing is left to wait for, here or on the next page.
-       The archive's 125 full-size pieces are left out: they still arrive as each one nears the focus.
+       The archive's 125 full-size pieces are left out: they still arrive as each one comes on screen.
        After ten seconds the screen lifts anyway and the rest keeps arriving behind the skeletons.
        Once everything is in, the visit is marked (sessionStorage.warm) and the <head> of the next page skips the screen. ---------- */
     const loader = document.querySelector('.loader');
@@ -65,8 +65,8 @@
     const scan = (doc, base, other) => {
         const add = src => { if (src) want(new URL(src, base).href); };
         const within = from => {
-            from.querySelectorAll('[data-bg]').forEach(el => add(el.dataset.bg));
-            from.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('#strip')) add(img.dataset.full); });
+            from.querySelectorAll('[data-bg]').forEach(el => { if (!el.closest('[data-run]')) add(el.dataset.bg); });
+            from.querySelectorAll('img[data-full]').forEach(img => { if (!img.closest('[data-run]')) add(img.dataset.full); });
             from.querySelectorAll('template').forEach(t => {
                 t.content.querySelectorAll('img[src]').forEach(img => add(img.getAttribute('src')));
                 within(t.content);
@@ -301,134 +301,6 @@
         chip.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), pick(chip)));
     });
 
-    /* ---------- archive: an endless line of work across the middle of the screen.
-       Scrolling runs the line from right to left, and it loops for ever. As a piece nears the focus point it grows,
-       drifts above or below the line and overlaps its neighbours; past the focus it shrinks back into the line. ---------- */
-    const strip = document.getElementById('strip');
-    if (strip) {
-        const stage = document.getElementById('arch-stage');
-        const figs = [...strip.querySelectorAll('figure')];
-        const num = document.getElementById('arch-n');
-        const cap = document.getElementById('arch-cap');
-        const N = figs.length;
-        const BASE = 40;                                   /* height of a piece at rest, px */
-        const GAP = 3;
-        const DRIFT = [-1, .45, -.3, .95, -.75, .2, .7, -.5, 1, -.15, .55, -.9];   /* how far each piece wanders off the line */
-        const pad = n => String(n).padStart(2, '0');
-        const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        /* where each piece sits along the loop, measured to its centre */
-        let L = 0;
-        figs.forEach(f => {
-            const img = f.querySelector('img');
-            /* proportions from the width/height attributes: the image itself may not have loaded yet */
-            f.bw = BASE * Number(img.getAttribute('width')) / Number(img.getAttribute('height'));
-            f.at = L + f.bw / 2;
-            L += f.bw + GAP;
-        });
-
-        let W = 0, H = 0, push = 0, reach = 0;
-        let run = figs[0].at, goal = run;                  /* how far the line has run; starts with the first piece in focus */
-        let fx = .5, fxGoal = .5;                          /* focus point, as a share of the width */
-        let shown = -1, raf = 0;
-
-        const size = () => {
-            W = stage.clientWidth; H = stage.clientHeight;
-            push = Math.min(260, W * .2);                  /* room the opened pieces take from the rest of the line */
-            reach = Math.max(70, Math.min(130, W * .09));  /* how close to the focus a piece starts to open */
-        };
-
-        const draw = () => {
-            const tall = Math.min(H * .46, 520);
-            const focus = fx * W;
-            let best = 0, bestNear = -1;
-            figs.forEach((f, i) => {
-                /* distance from the focus along the loop, wrapped so the line never ends */
-                let d = (f.at - run) % L;
-                if (d < -L / 2) d += L; else if (d >= L / 2) d -= L;
-                const near = Math.exp(-(d * d) / (reach * reach));
-                const x = focus + d + Math.tanh(d / (reach * 1.4)) * push;
-                if (x < -700 || x > W + 700) { if (f.on !== false) { f.on = false; f.style.visibility = 'hidden'; } return; }
-                if (!f.on) { f.on = true; f.style.visibility = ''; }
-                const scale = 1 + near * (Math.min(tall / BASE, W * .62 / f.bw) - 1);
-                const y = DRIFT[i % DRIFT.length] * H * .2 * near;
-                /* real width and height, not a scale transform, so the opened piece stays sharp */
-                if (scale !== f.sc) {
-                    f.sc = scale;
-                    f.style.width = f.bw * scale + 'px';
-                    f.style.height = BASE * scale + 'px';
-                    f.style.marginLeft = -f.bw * scale / 2 + 'px';
-                    f.style.marginTop = -BASE * scale / 2 + 'px';
-                }
-                f.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-                f.style.zIndex = Math.round(near * 1000);
-                f.classList.toggle('up', near > .15);
-                if (near > .1) {
-                    const img = f.querySelector('img');
-                    if (img.dataset.full) { img.src = img.dataset.full; delete img.dataset.full; }
-                }
-                if (near > bestNear) { bestNear = near; best = i; }
-            });
-            if (best !== shown) {
-                shown = best;
-                num.textContent = pad(best + 1) + ' / ' + N;
-                cap.textContent = figs[best].querySelector('figcaption').textContent;
-            }
-        };
-
-        const tick = () => {
-            raf = 0;
-            const k = still ? 1 : .16;
-            run += (goal - run) * k;
-            fx += (fxGoal - fx) * k;
-            if (Math.abs(goal - run) < .05) run = goal;
-            if (Math.abs(fxGoal - fx) < .0005) fx = fxGoal;
-            draw();
-            if (run !== goal || fx !== fxGoal) raf = requestAnimationFrame(tick);
-        };
-        const go = () => { if (!raf) { last = 0; raf = requestAnimationFrame(tick); } };
-
-        /* the wheel runs the line; it never reaches an end */
-        stage.addEventListener('wheel', e => {
-            e.preventDefault();
-            goal += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-            go();
-        }, { passive: false });
-
-        /* a phone has no wheel: there a sideways swipe is the scroll. A mouse cannot drag the line. */
-        let dragX = null;
-        stage.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') dragX = e.clientX; });
-        addEventListener('pointerup', () => { dragX = null; });
-        addEventListener('pointercancel', () => { dragX = null; });
-        stage.addEventListener('pointermove', e => {
-            if (dragX !== null) {
-                goal -= (e.clientX - dragX) * 1.4; dragX = e.clientX; go();
-                return;
-            }
-            /* a mouse resting on the line moves the point where the pieces open */
-            if (e.pointerType !== 'mouse') return;
-            const r = stage.getBoundingClientRect();
-            if (Math.abs(e.clientY - (r.top + r.height / 2)) < 44) {
-                fxGoal = Math.max(.15, Math.min(.85, (e.clientX - r.left) / r.width)); go();
-            }
-        });
-        stage.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { fxGoal = .5; go(); } });
-
-        strip.addEventListener('keydown', e => {
-            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-            e.preventDefault();
-            const next = figs[(shown + (e.key === 'ArrowRight' ? 1 : N - 1)) % N];
-            /* go to the neighbour by the short way round the loop */
-            let d = (next.at - goal) % L;
-            if (d < -L / 2) d += L; else if (d >= L / 2) d -= L;
-            goal += d; go();
-        });
-        addEventListener('resize', () => { size(); draw(); });
-
-        size();
-        draw();
-    }
-
     /* ---------- certificates: a click opens the paper large, over the blurred page.
        A grouped certificate opens its whole set first; picking one from the set shows that one large. ---------- */
     const box = document.getElementById('lightbox');
@@ -507,27 +379,37 @@
         const BASE = 180;
         const DRIFT = [-1, .45, -.3, .95, -.75, .2, .7, -.5, 1, -.15, .55, -.9];
         const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        figs.forEach(f => { f.bw = BASE * Number(f.dataset.ratio || 1); });
+        figs.forEach(f => {
+            f.bw = BASE * Number(f.dataset.ratio || 1);
+            const img = f.querySelector('img');
+            if (img) img.decoding = 'async';      /* a big picture is unpacked aside, not in the middle of a frame */
+        });
 
         let W = 0, push = 0, step = 0, LOOP = 1;
         let focus = 0, goal = focus, open = 0, openGoal = 0, raf = 0;
         /* the photos crawl to the right like cars in a jam, a loop longer than the screen that wraps out of sight. Each one
            wants its own speed for a while and has its own acceleration, and none passes the one ahead: it pulls away, stalls,
            and the ones behind close up and follow. Traffic stops while the pointer is on the line */
-        const GAP = 28, MARGIN = 200, PACE = 3;      /* room between two photos in the loop; how far past the left edge a photo wraps; how fast the whole road runs */
+        const GAP = 28, MARGIN = 200, PACE = 2;      /* room between two photos in the loop; how far past the left edge a photo wraps; how fast the whole road runs */
         const KEEP = 10, HEADWAY = 1.2, BRAKE = 30;      /* the gap a photo keeps standing, px; and moving, s; how hard it brakes, px/s^2 */
+        const EASE = 170;      /* ms the photos take to answer the pointer or the wheel, about two thirds of the way */
         let last = 0, seen = true;
         /* the gallery: the same photos leave the road, each at its own moment, and settle in rows in the same space */
         const SETTLE = 1100, LATE = .5, PAD = 20, TIGHT = 6;      /* ms for one photo; how much of that the last one waits; side margin; between photos */
         let gridT = 0, gridGoal = 0, over = -1;
         figs.forEach(f => { f.late = Math.random(); f.lift = 0; });
+        /* a line with data-run (the archive) holds far more than a screen and has no page to scroll: the wheel, a swipe
+           or the arrow keys run its whole road past the screen, and the piece in view is named under the line */
+        const runs = pline.hasAttribute('data-run');
+        const num = document.getElementById('arch-n'), cap = document.getElementById('arch-cap');
+        let shift = 0, shiftGoal = 0, swipe = null, named = -1;
 
         /* the rows that give the largest photos in this space: try each count, keep each photo's shape */
         const arrange = () => {
             const H = pline.clientHeight - 8, room = W - PAD * 2;
             const total = figs.reduce((sum, f) => sum + f.bw, 0) / BASE;
             let best = null;
-            for (let count = 1; count <= 10; count++) {
+            for (let count = 1; count <= 16; count++) {
                 const rows = [[]];
                 let sum = 0;
                 figs.forEach(f => {
@@ -537,6 +419,7 @@
                     sum += r;
                 });
                 const heights = rows.map(row => (room - TIGHT * (row.length - 1)) / row.reduce((a, f) => a + f.bw / BASE, 0));
+                if (heights.some(h => h <= 0)) continue;      /* so many in a row that the gaps alone overfill it */
                 const tall = heights.reduce((a, b) => a + b, 0), gaps = TIGHT * (rows.length - 1);
                 const fit = Math.min(1, (H - gaps) / tall);
                 const mean = tall * fit / rows.length;
@@ -570,6 +453,7 @@
                 } else f.pos *= (widths + gap * N) / before;
                 at += f.bw + gap;
             });
+            shift *= at / before; shiftGoal *= at / before;
             LOOP = at;
             step = at / N;
             arrange();
@@ -605,8 +489,10 @@
             const spread = Math.min(7, Math.max(1.6, 70 / Math.max(step, 1)));
             const H = pline.clientHeight;
             const tall = Math.min(360, H * .85, W * .6), drift = Math.min(70, H * .16, W * .1);
+            const big = Math.max(tall, H * .6), dpr = devicePixelRatio || 1;
+            let best = 0, bestNear = -Infinity;
             figs.forEach((f, i) => {
-                const u = ((f.pos + MARGIN) % LOOP + LOOP) % LOOP - MARGIN;      /* where this photo sits along the line, px */
+                const u = ((f.pos + shift + MARGIN) % LOOP + LOOP) % LOOP - MARGIN;      /* where this photo sits along the line, px */
                 const d = (u - focus) / step;
                 const near = Math.exp(-(d * d) / (spread * spread)) * open;
                 const x = u + Math.tanh(d / (spread * 1.1)) * push * open;
@@ -624,32 +510,56 @@
                     px = off + (gx - off) * g; py = y + (gy - y) * g;
                     w += (gw - w) * g; h += (gh - h) * g;
                 }
-                if (w !== f.w || h !== f.h) {
-                    f.w = w; f.h = h;
-                    f.style.width = w + 'px';
-                    f.style.height = h + 'px';
-                    f.style.marginLeft = -w / 2 + 'px';
-                    f.style.marginTop = -h / 2 + 'px';
+                f.h = h;
+                /* nothing is laid out while it moves: a photo keeps its box, which the browser's graphics card only slides and scales.
+                   The box changes once, to the large size when a photo starts to open, so it stays sharp at any size,
+                   and back when it has closed. A photo off the screen is neither drawn nor moved */
+                const on = px + w / 2 > -40 && px - w / 2 < W + 40;
+                if (on !== f.on) { f.on = on; f.style.visibility = on ? '' : 'hidden'; }
+                if (!on) return;
+                const low = g === 1 ? f.gh : BASE;
+                const box = h > low * 1.05 ? big : low;
+                if (box !== f.box) {
+                    f.box = box;
+                    const bw = box * f.bw / BASE;
+                    f.style.width = bw + 'px';
+                    f.style.height = box + 'px';
+                    f.style.marginLeft = -bw / 2 + 'px';
+                    f.style.marginTop = -box / 2 + 'px';
                 }
-                f.style.transform = 'translate(' + px + 'px,' + py + 'px)';
-                f.style.zIndex = Math.round(Math.max(near, f.lift) * 1000);
+                f.style.transform = 'translate(' + px + 'px,' + py + 'px) scale(' + h / box + ')';
+                const z = Math.round(Math.max(near, f.lift) * 1000);
+                if (z !== f.z) { f.z = z; f.style.zIndex = z; }
                 f.classList.toggle('up', near > .35 || f.lift > .3);
-                if (px > -f.bw && px < W + f.bw) {
-                    const img = f.querySelector('img[data-full]');
-                    if (img) { img.src = img.dataset.full; delete img.dataset.full; }
+                const img = f.querySelector('img[data-full]');
+                /* the small picture is enough until the photo is shown larger than it */
+                if (img && h * dpr > Number(img.getAttribute('height'))) {
+                    const full = img.dataset.full, ready = new Image();
+                    delete img.dataset.full;
+                    ready.src = full;
+                    (ready.decode ? ready.decode() : Promise.resolve()).catch(() => { }).then(() => { img.src = full; });
                 }
+                const score = Math.max(near, f.lift) - Math.abs(px - W / 2) / 1e6;
+                if (score > bestNear) { bestNear = score; best = i; }
             });
+            if (runs && best !== named) {
+                named = best;
+                num.textContent = String(best + 1).padStart(2, '0') + ' / ' + N;
+                cap.textContent = figs[best].querySelector('figcaption').textContent;
+            }
         };
 
         const tick = now => {
             raf = 0;
             const dt = Math.min(now - (last || now), 60);
             last = now;
-            const k = still ? 1 : .18;
+            const k = still ? 1 : 1 - Math.exp(-dt / EASE);
             focus += (goal - focus) * k;
             open += (openGoal - open) * k;
             if (Math.abs(goal - focus) < .2) focus = goal;
             if (Math.abs(openGoal - open) < .002) open = openGoal;
+            shift += (shiftGoal - shift) * k;
+            if (Math.abs(shiftGoal - shift) < .2) shift = shiftGoal;
             if (!still) move(PACE * dt * (1 - open) * (1 - gridT) / 1000);
             gridT = still ? gridGoal : gridT < gridGoal ? Math.min(gridGoal, gridT + dt / SETTLE) : Math.max(gridGoal, gridT - dt / SETTLE);
             figs.forEach((f, i) => {
@@ -658,7 +568,7 @@
             });
             draw();
             if (!open && openGoal === 0) pline.classList.remove('live');
-            if (!still && seen || focus !== goal || open !== openGoal || gridT !== gridGoal || figs.some((f, i) => f.lift !== (i === over ? 1 : 0))) raf = requestAnimationFrame(tick);
+            if (!still && seen || focus !== goal || open !== openGoal || shift !== shiftGoal || gridT !== gridGoal || figs.some((f, i) => f.lift !== (i === over ? 1 : 0))) raf = requestAnimationFrame(tick);
         };
         const go = () => { if (!raf) { last = 0; raf = requestAnimationFrame(tick); } };
 
@@ -670,12 +580,33 @@
                 go();
                 return;
             }
+            if (runs && e.pointerType !== 'mouse') {
+                if (swipe !== null) shiftGoal += (e.clientX - swipe) * 1.4;
+                swipe = e.clientX;
+            }
             goal = e.clientX - box.left;
             openGoal = 1; pline.classList.add('live'); go();
         };
         pline.addEventListener('pointermove', steer);
         pline.addEventListener('pointerdown', steer);
         pline.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { openGoal = 0; over = -1; go(); } });
+        if (runs) {
+            pline.closest('section').addEventListener('wheel', e => {
+                e.preventDefault();
+                if (gridGoal) return;
+                shiftGoal -= (Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX) * .6;
+                go();
+            }, { passive: false });
+            addEventListener('pointerup', () => { swipe = null; });
+            addEventListener('pointercancel', () => { swipe = null; });
+            pline.addEventListener('keydown', e => {
+                if (gridGoal || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
+                e.preventDefault();
+                shiftGoal += e.key === 'ArrowRight' ? -step : step;
+                goal = W / 2; openGoal = 1; pline.classList.add('live'); go();
+            });
+            pline.addEventListener('blur', () => { openGoal = 0; go(); });
+        }
         const views = [...pline.closest('section').querySelectorAll('[data-view]')];
         views.forEach(button => button.addEventListener('click', () => {
             const on = button.dataset.view === 'grid';
@@ -701,7 +632,7 @@
        All of it stops while the line of photos is hovered. ---------- */
     document.querySelectorAll('.pbg').forEach(bg => {
         const ROW = 13, CELL = 14, PULSE = 10000, MARGIN = 20;
-        const FAINT = .1, SWEEP = .2, FEATHER = .05, DRIFT = .015;   /* the field outside the shape; how far apart the word's two ends and two letters pulse; the shape's px per ms */
+        const FRAME = 50, FAINT = .1, SWEEP = .2, FEATHER = .05, DRIFT = .015;   /* the field outside the shape; how far apart the word's two ends and two letters pulse; the shape's px per ms */
         const LETTERS = [...'hnmHNM'], COLOURS = ['--title', '--accent', '--ink'];
         const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
         const canvas = document.createElement('canvas');
@@ -762,7 +693,7 @@
             mask = m.getImageData(0, 0, P, m.canvas.height).data;
         };
 
-        let W = 0, H = 0, rows = [], clock = 0, rate = 1, goal = 1, last = 0, raf = 0, seen = true;
+        let W = 0, H = 0, rows = [], clock = 0, rate = 1, goal = 1, last = 0, raf = 0, seen = true, due = 0;
 
         const build = () => {
             const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -809,7 +740,12 @@
             last = now;
             rate += (goal - rate) * .18;
             if (Math.abs(goal - rate) < .002) rate = goal;
-            if (rate) paint();
+            /* thousands of letters: they move slowly enough for fewer frames, and never take more than a quarter of the time, so the photos above keep every frame */
+            if (rate && now >= due) {
+                const begun = performance.now();
+                paint();
+                due = now + Math.max(FRAME, (performance.now() - begun) * 4);
+            }
             if (seen) raf = requestAnimationFrame(tick);
         };
         const go = () => { if (still) paint(); else if (!raf) { last = 0; raf = requestAnimationFrame(tick); } };
@@ -1096,9 +1032,16 @@
             setLetters(now, x0, y0, x1, y1);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.globalAlpha = 1;
+            ctx.save();
+            /* only the part of the screen in use, not all of it */
+            if (!rings.length && x1 > x0) {
+                ctx.beginPath();
+                ctx.rect(x0 * dpr, y0 * dpr, (x1 - x0) * dpr, (y1 - y0) * dpr);
+                ctx.clip();
+            }
             ctx.globalCompositeOperation = 'source-in';
             ctx.drawImage(layer, 0, 0);
-            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
 
             if (trail.length || waves.length || x !== tx || y !== ty || show !== showGoal) wake();
             else if (show && !still) idle = setTimeout(wake, 40);    /* at rest only the letters move, which needs fewer frames */

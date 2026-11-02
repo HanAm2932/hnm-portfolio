@@ -1131,92 +1131,30 @@ h3,
     color: var(--title);
 }
 
-/* ---------- archive: one screen. The work runs in an endless thin line across the middle;
-   pieces near the focus point open into a loose, overlapping pile ---------- */
+/* ---------- archive: one screen, built like Home's "what makes me happy": title, the line of work (.pline), and
+   a bar naming the piece in view ---------- */
 
 .arch {
-    position: relative;
     height: var(--screen);
     overflow: hidden;
 }
 
-.arch-head {
-    position: absolute;
-    top: 28px;
-    left: 20px;
-    z-index: 1;
-    max-width: 30em;
-    pointer-events: none;
-}
-
-.arch-head a {
-    pointer-events: auto;
-}
-
-.arch-head > * + * {
+.arch .head > * + * {
     margin-top: 10px;
 }
 
-.arch-stage {
-    position: absolute;
-    inset: 0;
-    touch-action: pan-y;
-}
-
-/* the hairline the pieces sit on, exactly halfway down the screen */
-.arch-stage::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    border-top: 1px solid var(--line);
-}
-
-.strip {
-    position: absolute;
-    inset: 0;
-    outline: none;
-}
-
-.strip figure {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    /* until the script has placed a piece, it has no size and cannot show */
-    width: 0;
-    height: 0;
-    overflow: hidden;
-}
-
-/* only a piece that has opened casts a shadow; the resting line has none */
-.strip figure.up {
-    box-shadow: 0 4px 18px rgba(0, 0, 0, .2);
-}
-
-.strip img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.strip figcaption {
-    display: none;
+.arch .head .muted {
+    max-width: 30em;
 }
 
 .arch-foot {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 18px;
-    z-index: 1;
     display: flex;
     gap: 24px;
     align-items: baseline;
+    padding: 12px 20px;
+    border-top: 1px solid var(--line);
     font-size: 13px;
     color: var(--mid);
-    pointer-events: none;
 }
 
 .arch-foot #arch-cap {
@@ -1227,19 +1165,31 @@ h3,
     margin-left: auto;
 }
 
-.strip img {
-    pointer-events: none;
-    -webkit-user-drag: none;
-    user-select: none;
-}
-
 .arch-foot .mono {
     white-space: nowrap;
+}
+
+.plines:has(.grid) + .arch-foot .arch-hint {
+    visibility: hidden;
+}
+
+.pline figcaption {
+    display: none;
+}
+
+.pline:focus {
+    outline: none;
 }
 
 @media (max-width: 760px) {
     .arch-foot .arch-hint {
         display: none;
+    }
+
+    /* no room beside the intro: the buttons move up, level with the way back */
+    .arch .pview {
+        top: 28px;
+        bottom: auto;
     }
 }
 
@@ -1447,6 +1397,7 @@ h3,
     position: absolute;
     top: 50%;
     left: 0;
+    will-change: transform; /* each photo on its own layer, so it glides between pixels */
     aspect-ratio: auto;
     padding: 0;
     border-width: 1px;
@@ -1751,8 +1702,7 @@ h3,
    main.js marks a picture .wait while it is on its way and .in once it is there ---------- */
 
 .img:has(> img:not(.in)),
-.pline figure:has(> img:not(.in)),
-.strip figure:has(> img:not(.in)) {
+.pline figure:has(> img:not(.in)) {
     background: linear-gradient(100deg, var(--fill) 35%, var(--paper) 50%, var(--fill) 65%) 100% 0 / 300% 100%;
     animation: skeleton 1.4s linear infinite;
 }
@@ -1782,8 +1732,7 @@ figure > img.wait {
 
 @media (prefers-reduced-motion: reduce) {
     .img:has(> img:not(.in)),
-    .pline figure:has(> img:not(.in)),
-    .strip figure:has(> img:not(.in)) {
+    .pline figure:has(> img:not(.in)) {
         background: var(--fill);
         animation: none;
     }
